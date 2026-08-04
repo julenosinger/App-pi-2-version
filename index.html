@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>PioneerPIX</title>
+
+<!-- ══════════════════════════════════════════════════
+     PI SDK — Obrigatório conforme documentação oficial
+     https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
+     ══════════════════════════════════════════════════ -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+  // SDK init — sandbox:true para Testnet/desenvolvimento
+  // Em produção Mainnet: remover sandbox ou setar false
+  Pi.init({ version: "2.0", sandbox: true });
+</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--panel:#111118;--card:#16161f;--card2:#1c1c28;
+  --border:#232334;--border2:#2a2a3d;
+  --gold:#f0a030;--gold2:#c47820;--gold-glow:rgba(240,160,48,.14);
+  --text:#eeeef5;--sub:#7070a0;--sub2:#404060;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;
+  --sw:224px;--r:12px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:13px;overflow:hidden;position:fixed;inset:0}
+body{display:flex}
+@media(max-width:768px){body{flex-direction:column;padding-top:52px;padding-bottom:58px}}
+
+/* ── SIDEBAR ── */
+aside{width:var(--sw);background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+aside::-webkit-scrollbar{width:3px}
+aside::-webkit-scrollbar-thumb{background:var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:#000;box-shadow:0 4px 14px rgba(240,160,48,.35);flex-shrink:0}
+.logo-name{font-size:16px;font-weight:800;letter-spacing:-.4px}
+.logo-sub{font-size:10px;color:var(--sub);margin-top:1px}
+.ns{padding:14px 10px 4px}
+.nl{font-size:9.5px;font-weight:700;letter-spacing:1.2px;color:var(--sub2);text-transform:uppercase;padding:0 6px 6px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--sub);transition:background .14s,color .14s;position:relative;margin-bottom:1px}
+.ni:hover{background:var(--card2);color:var(--text)}
+.ni.active{background:linear-gradient(90deg,rgba(240,160,48,.12),rgba(240,160,48,.03));color:var(--text);border:1px solid rgba(240,160,48,.18)}
+.ni.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:3px;background:var(--gold);border-radius:0 3px 3px 0}
+.ni svg{width:17px;height:17px;flex-shrink:0;opacity:.65}
+.ni.active svg,.ni:hover svg{opacity:1}
+.ni span{flex:1;font-size:12.5px;font-weight:500}
+.ni.active span{font-weight:600}
+.badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;line-height:1.4}
+.bg{background:var(--gold);color:#000}
+.bgg{background:#16a34a;color:#bbf7d0}
+.bgp{background:#581c87;color:#e9d5ff}
+
+/* Pi Auth Status Banner */
+.auth-banner{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(240,160,48,.07);border-bottom:1px solid rgba(240,160,48,.15);font-size:11px}
+.auth-banner svg{width:13px;height:13px;flex-shrink:0}
+.auth-banner.ok{background:rgba(34,197,94,.07);border-bottom-color:rgba(34,197,94,.2);color:var(--green)}
+.auth-banner.ok svg{color:var(--green)}
+.auth-banner.err{background:rgba(239,68,68,.07);border-bottom-color:rgba(239,68,68,.2);color:var(--red)}
+.auth-banner.warn{color:var(--gold)}
+.auth-banner.warn svg{color:var(--gold)}
+
+/* Wallet footer */
+.wfooter{margin-top:auto;border-top:1px solid var(--border);padding:14px 10px}
+.wcard{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:12px}
+.wcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.wlbl{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--sub);font-weight:600}
+.wdot{width:7px;height:7px;border-radius:50%;background:var(--sub2);transition:background .3s}
+.wdot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.wbal{font-size:24px;font-weight:800}
+.wunit{color:var(--gold);font-size:13px;font-weight:600;margin-top:2px}
+.wuser{color:var(--sub);font-size:11px;margin-top:2px}
+.netrow{display:flex;gap:5px;margin-top:10px}
+.nbtn{flex:1;font-size:9.5px;font-weight:600;padding:5px 0;border-radius:7px;border:1px solid var(--border2);background:var(--card);color:var(--sub);cursor:pointer;transition:border-color .14s,color .14s;text-align:center}
+.nbtn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ── MOBILE TOP BAR ── */
+.mob-top{display:none;position:fixed;top:0;left:0;right:0;z-index:200;background:var(--panel);border-bottom:1px solid var(--border);padding:0 14px;align-items:center;gap:10px;height:52px}
+.mob-top .mlogo{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#000;flex-shrink:0}
+.mob-top .mname{font-size:15px;font-weight:800;letter-spacing:-.3px;flex:1}
+.mob-menu-btn{width:36px;height:36px;border:none;background:var(--card2);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:8px;flex-shrink:0}
+.mob-menu-btn span{display:block;width:16px;height:2px;background:var(--text);border-radius:1px;transition:all .2s}
+.mob-menu-btn.open span:nth-child(1){transform:rotate(45deg)translate(4px,4px)}
+.mob-menu-btn.open span:nth-child(2){opacity:0}
+.mob-menu-btn.open span:nth-child(3){transform:rotate(-45deg)translate(4px,-4px)}
+
+/* ── MOBILE BOTTOM NAV ── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--panel);border-top:1px solid var(--border);padding:5px 4px calc(5px + var(--safe-bottom))}
+.mob-nav-inner{display:flex;justify-content:space-around;max-width:500px;margin:0 auto}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:8px;cursor:pointer;color:var(--sub);transition:color .14s;min-width:52px}
+.mob-nav-item svg{width:20px;height:20px}
+.mob-nav-item span{font-size:9.5px;font-weight:500}
+.mob-nav-item.active{color:var(--gold)}
+
+/* ── SIDEBAR OVERLAY ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99}
+@media(min-width:769px){.sidebar-overlay.show{display:none}}
+@media(max-width:768px){.sidebar-overlay.show{display:block}}
+
+/* ── MAIN ── */
+@media(max-width:768px){
+  /* Layout */
+  aside{position:fixed;top:52px;left:0;bottom:58px;width:260px;transform:translateX(-100%);z-index:100;transition:transform .22s ease;border-right:1px solid var(--border)}
+  aside.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5)}
+  .topbar{display:none}
+  .mob-top{display:flex}
+  .mob-nav{display:block}
+  main{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+  .page{flex:1;min-height:0;overflow:hidden;display:none}
+  .page.active{display:flex;flex-direction:column}
+  .scroll{padding:8px;-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1}
+  .sgap{gap:8px}
+
+  /* Grids */
+  .two-col{display:flex;flex-direction:column;gap:8px}
+  .four-col{grid-template-columns:1fr 1fr;gap:6px}
+  .three-col{grid-template-columns:1fr 1fr;gap:6px}
+  .fr2{grid-template-columns:1fr;gap:8px}
+  .fr3{grid-template-columns:1fr;gap:8px}
+  .frow{grid-template-columns:1fr 1fr;gap:6px}
+
+  /* Ensure cards don't overflow */
+  .card,.card-sm,.stat{max-width:100%;overflow:hidden}
+  .tbl{max-width:100%}
+  .chips{max-width:100%}
+  [style*="display:flex;align-items:center;justify-content:space-between"]{flex-wrap:wrap;gap:6px}
+
+  /* Cards & Stats — more compact */
+  .card{padding:10px;border-radius:8px}
+  .card-sm{padding:9px}
+  .stat{padding:9px;border-radius:8px}
+  .sval{font-size:16px}
+  .sval[style*="font-size:32px"],.sval[style*="font-size:28px"]{font-size:20px!important}
+  .slbl{font-size:9.5px}
+  .ctitle{font-size:12px;margin-bottom:8px}
+  .ctitle svg{width:13px;height:13px}
+
+  /* Feature cards */
+  .fcard{padding:8px;gap:6px;border-radius:7px}
+  .fico{width:24px;height:24px;border-radius:5px}
+  .fico svg{width:12px;height:12px}
+  .fcard h4{font-size:11px}
+  .fcard p{font-size:9.5px}
+
+  /* Buttons */
+  .btn-gold{font-size:11px;padding:8px 12px;border-radius:7px}
+  .btn-out{font-size:10.5px;padding:6px 10px;border-radius:7px}
+  .auth-btn{font-size:10.5px;padding:5px 10px}
+  .pill-btn{display:none!important}
+
+  /* Sidebar */
+  .logo{display:none}
+  .wfooter{padding:6px}
+  .wcard{padding:8px}
+  .wbal{font-size:18px}
+  .ns{padding:4px 2px 0}
+  .ni{padding:7px 6px}
+  .ni svg{width:14px;height:14px}
+  .ni span{font-size:11px}
+
+  /* Forms */
+  .fi{font-size:13px!important;padding:10px 12px!important}
+  .chips{gap:4px}
+  .chip{font-size:10px;padding:3px 8px}
+
+  /* Table */
+  .tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl thead,.tbl tbody,.tbl tr,.tbl th,.tbl td{white-space:nowrap}
+  .tbl th{font-size:9px;padding:0 5px 6px}
+  .tbl td{padding:7px 5px;font-size:11px}
+  .amt{font-size:12px}
+
+  /* Transaction items */
+  .txi{padding:7px 0;gap:8px}
+  .txic{width:28px;height:28px;border-radius:6px}
+  .txic svg{width:13px;height:13px}
+  .txi-title{font-size:11px}
+  .txi-sub{font-size:9.5px}
+  .txa{font-size:12px}
+  .txd{font-size:9.5px}
+
+  /* Preview circle */
+  .pcirc{width:48px;height:48px}
+  .pcirc svg{width:20px;height:20px}
+  .pamt{font-size:22px}
+
+  /* How steps */
+  .hstep{padding:5px 0;gap:6px}
+  .hsico{width:22px;height:22px;border-radius:5px}
+  .hsico svg{width:11px;height:11px}
+
+  /* Queue items */
+  .qi{padding:8px;gap:8px}
+
+  /* Schedule items */
+  .schi{padding:8px;gap:8px}
+  .schico{width:30px;height:30px;border-radius:6px}
+  .schico svg{width:14px;height:14px}
+  .sch-t{font-size:11px}
+  .sch-s{font-size:9.5px}
+  .sch-a{font-size:12px}
+
+  /* Contact items */
+  .citem{padding:7px 9px}
+  .av{width:26px;height:26px;font-size:11px}
+  .cn{font-size:11px}
+  .ca{font-size:9.5px}
+
+  /* Upload zone */
+  .uzone{padding:18px 14px}
+  .uzone svg{width:26px;height:26px;margin-bottom:6px}
+  .uzione{font-size:12px}
+  .uzones{font-size:10px}
+
+  /* Toggle rows */
+  .trow{padding:10px 0}
+  .tinfo h4{font-size:11px}
+  .tinfo p{font-size:10px}
+
+  /* Search */
+  .si{width:120px;font-size:10.5px;padding:5px 10px 5px 26px}
+  .sw svg{width:10px;height:10px;left:7px}
+
+  /* Tabs */
+  .tabs{gap:2px}
+  .tab{font-size:10px;padding:3px 9px}
+
+  /* Settings page */
+  .snav{display:flex;flex-wrap:wrap;gap:3px;padding:6px!important;flex-direction:row!important}
+  .snav .si2{font-size:10.5px;padding:6px 9px;white-space:nowrap}
+  .snav .si2 svg{width:12px;height:12px}
+  [style*="grid-template-columns:220px"]{display:flex;flex-direction:column;gap:8px}
+
+  /* Alert boxes */
+  [style*="rgba(240,160,48,.07)"]{font-size:10px!important;padding:6px 8px!important}
+  [style*="rgba(239,68,68,.07)"]{font-size:10px!important;padding:6px 8px!important}
+  [style*="rgba(59,130,246,.07)"]{font-size:10px!important;padding:6px 8px!important}
+
+  /* Divider */
+  .divider{margin:8px 0}
+
+  /* Balance activity chart */
+  [style*="height:80px"]{height:40px!important}
+
+  /* Payment link section */
+  [style*="align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap"]{
+    flex-direction:column;align-items:flex-start!important;gap:6px!important;margin-bottom:8px!important
+  }
+
+  /* Modal */
+  .modal{max-width:calc(100vw - 12px);padding:14px;border-radius:12px}
+  .modal h2{font-size:14px}
+  .modal .msub{font-size:10px;margin-bottom:10px}
+  .modal-body{padding:9px}
+  .modal-row{font-size:11px}
+  .modal-step{font-size:10.5px;gap:6px;padding:5px}
+  .modal-step svg{width:12px;height:12px}
+  .modal-btns{margin-top:8px}
+
+  /* Toast */
+  .toast{bottom:75px;min-width:auto;left:10px;right:10px;transform:translateY(10px);border-radius:9px;padding:8px 14px}
+  .toast.show{transform:translateY(0)}
+  .tbody h4{font-size:11px}
+  .tbody p{font-size:10px}
+
+  /* About section */
+  [style*="width:56px;height:56px"]{width:40px!important;height:40px!important;border-radius:10px!important;font-size:20px!important}
+  [style*="font-size:18px;font-weight:800"]{font-size:14px!important}
+}
+@media(max-width:400px){
+  .four-col{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr}
+  .fcard{flex-direction:column;align-items:flex-start}
+  .sval{font-size:15px}
+  .snav .si2{flex:1;min-width:0;justify-content:center}
+  .scroll{padding:6px}
+  .card{padding:8px}
+  .stat{padding:8px}
+  .two-col{gap:6px}
+  .sgap{gap:6px}
+}
+main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:60px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0}
+.phead{display:flex;align-items:center;gap:12px}
+.picon{width:38px;height:38px;border:1.5px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--card2)}
+.picon svg{width:18px;height:18px;color:var(--gold)}
+.ptitle h1{font-size:17px;font-weight:700}
+.ptitle p{color:var(--sub);font-size:11.5px;margin-top:1px}
+.tright{display:flex;gap:9px;align-items:center}
+.pill-btn{display:flex;align-items:center;gap:7px;border:1.5px solid var(--border2);border-radius:22px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);background:transparent;transition:border-color .14s}
+.pill-btn:hover{border-color:var(--gold)}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.auth-btn{display:flex;align-items:center;gap:7px;border:1.5px solid var(--border2);border-radius:22px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;transition:opacity .14s}
+.auth-btn:hover{opacity:.88}
+.auth-btn.connected{background:transparent;color:var(--text);border-color:rgba(34,197,94,.4)}
+
+/* Pages */
+.page{display:none;flex:1;overflow:hidden}
+.page.active{display:flex}
+.scroll{overflow-y:auto;padding:20px;flex:1}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.ctitle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin-bottom:14px}
+.ctitle svg{width:16px;height:16px;color:var(--gold)}
+.sgap{display:flex;flex-direction:column;gap:14px}
+
+/* Stats */
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.slbl{font-size:11px;color:var(--sub);font-weight:500}
+.sval{font-size:26px;font-weight:800;line-height:1.1}
+.spi{color:var(--gold)}
+.smeta{display:flex;align-items:center;gap:6px;margin-top:4px}
+.schange{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px}
+.up{background:rgba(34,197,94,.12);color:var(--green)}
+.dn{background:rgba(239,68,68,.12);color:var(--red)}
+.nt{background:rgba(112,112,160,.12);color:var(--sub)}
+.sper{font-size:11px;color:var(--sub)}
+
+/* Layout grids */
+.two-col{display:grid;grid-template-columns:1fr 292px;gap:16px}
+.four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+/* Form */
+.fg{display:flex;flex-direction:column;gap:6px}
+.fl{font-size:11px;color:var(--sub);font-weight:500}
+.fi{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .14s;font-family:inherit}
+.fi:focus{border-color:var(--gold)}
+.fi::placeholder{color:var(--sub2)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:transparent;border:1px solid var(--border2);border-radius:20px;color:var(--sub);font-size:11px;font-weight:600;padding:4px 11px;cursor:pointer;transition:border-color .14s,color .14s}
+.chip:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Buttons */
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#000;font-size:13px;font-weight:700;padding:10px 18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .14s;font-family:inherit}
+.btn-gold:hover{opacity:.88}
+.btn-gold.full{width:100%}
+.btn-gold:disabled{opacity:.4;cursor:not-allowed}
+.btn-out{background:transparent;border:1.5px solid var(--border2);border-radius:9px;color:var(--text);font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .14s;font-family:inherit}
+.btn-out:hover{border-color:var(--gold)}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;font-weight:600;color:var(--sub2);text-align:left;padding:0 10px 10px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:11px 10px;border-top:1px solid var(--border);vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,.015)}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.p-active{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.p-used{background:rgba(112,112,160,.1);color:var(--sub);border:1px solid var(--border)}
+.p-expired{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.p-pending{background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.25)}
+.p-done{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.p-failed{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.p-queued{background:rgba(240,160,48,.1);color:var(--gold);border:1px solid rgba(240,160,48,.25)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px}
+.tab{background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--sub);font-size:11px;font-weight:600;padding:5px 13px;cursor:pointer;transition:all .14s}
+.tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
+.tab:not(.active):hover{border-color:var(--gold);color:var(--gold)}
+
+/* Search */
+.sw{position:relative}
+.sw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--sub2)}
+.si{background:var(--bg);border:1px solid var(--border2);border-radius:20px;color:var(--text);font-size:11.5px;padding:7px 14px 7px 30px;outline:none;width:180px;font-family:inherit}
+.si::placeholder{color:var(--sub2)}
+.si:focus{border-color:var(--gold)}
+
+/* Icon cell */
+.ic{width:30px;height:30px;background:var(--card2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.ic svg{width:14px;height:14px;color:var(--gold)}
+
+/* Action buttons */
+.ar{display:flex;gap:6px}
+.ab{background:transparent;border:none;color:var(--sub);cursor:pointer;padding:4px;border-radius:5px;display:flex;align-items:center;transition:color .14s,background .14s}
+.ab:hover{color:var(--text);background:var(--card2)}
+.ab svg{width:14px;height:14px}
+
+/* Progress */
+.pw{background:var(--bg);border-radius:20px;height:6px;width:100%;overflow:hidden;margin-top:4px}
+.pb{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pb.g{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.pb.b{background:linear-gradient(90deg,#3b82f6,#1d4ed8)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.amt{font-size:14px;font-weight:700}
+
+/* Feature row */
+.frow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:flex-start;gap:10px}
+.fico{width:32px;height:32px;background:var(--gold-glow);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fico svg{width:16px;height:16px;color:var(--gold)}
+.fcard h4{font-size:12.5px;font-weight:600}
+.fcard p{font-size:11px;color:var(--sub);margin-top:2px;line-height:1.4}
+
+/* Preview */
+.pcirc{width:72px;height:72px;border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.pcirc svg{width:30px;height:30px;color:var(--gold)}
+.pamt{font-size:30px;font-weight:800;text-align:center}
+.ppi{color:var(--gold)}
+
+/* How steps */
+.hstep{display:flex;align-items:flex-start;gap:10px;padding:8px 0;position:relative}
+.hstep:not(:last-child)::after{content:'';position:absolute;left:15px;top:32px;width:1px;height:calc(100% - 8px);background:var(--border)}
+.hsico{width:30px;height:30px;background:var(--card2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;position:relative}
+.hsico svg{width:14px;height:14px;color:var(--gold)}
+.hsico.done{background:rgba(34,197,94,.12)}
+.hsico.done svg{color:var(--green)}
+
+/* Tx items */
+.txi{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.txic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.txic.s{background:rgba(239,68,68,.1)}
+.txic.r{background:rgba(34,197,94,.1)}
+.txic.s svg{color:var(--red);width:16px;height:16px}
+.txic.r svg{color:var(--green);width:16px;height:16px}
+.txi-info{flex:1}
+.txi-title{font-size:13px;font-weight:600}
+.txi-sub{font-size:11px;color:var(--sub);margin-top:1px}
+.txi-right{text-align:right}
+.txa{font-size:14px;font-weight:700}
+.txa.neg{color:var(--red)}
+.txa.pos{color:var(--green)}
+.txd{font-size:10.5px;color:var(--sub);margin-top:1px}
+
+/* schedule */
+.schi{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:9px;margin-bottom:8px}
+.schico{width:38px;height:38px;background:var(--card2);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.schico svg{width:18px;height:18px;color:var(--gold)}
+.sch-info{flex:1}
+.sch-t{font-size:13px;font-weight:600}
+.sch-s{font-size:11px;color:var(--sub);margin-top:1px}
+.sch-r{text-align:right}
+.sch-a{font-size:14px;font-weight:700}
+.sch-n{font-size:10.5px;color:var(--sub);margin-top:1px}
+
+/* contact */
+.citem{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:border-color .14s;margin-bottom:6px}
+.citem:hover{border-color:var(--gold)}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.cn{font-size:12.5px;font-weight:600}
+.ca{font-size:10.5px;color:var(--sub)}
+
+/* upload zone */
+.uzone{border:2px dashed var(--border2);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .14s,background .14s}
+.uzone:hover{border-color:var(--gold);background:var(--gold-glow)}
+.uzone svg{width:38px;height:38px;color:var(--sub2);margin-bottom:12px}
+.uzione{font-size:14px;font-weight:600;margin-bottom:4px}
+.uzones{font-size:12px;color:var(--sub)}
+
+/* queue item */
+.qi{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:9px;margin-bottom:8px}
+
+/* toggle */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.trow:last-child{border-bottom:none}
+.tinfo h4{font-size:13px;font-weight:600}
+.tinfo p{font-size:11.5px;color:var(--sub);margin-top:2px}
+.tog{position:relative;width:40px;height:22px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:background .2s}
+.sl::before{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.tog input:checked + .sl{background:var(--gold)}
+.tog input:checked + .sl::before{transform:translateX(18px)}
+
+/* settings nav */
+.snav .si2{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--sub);transition:all .14s;margin-bottom:2px;font-size:12.5px}
+.snav .si2:hover{background:var(--card2);color:var(--text)}
+.snav .si2.active{background:var(--card2);color:var(--text);font-weight:600}
+.snav .si2 svg{width:15px;height:15px;flex-shrink:0}
+
+/* ── PAYMENT MODAL (Pi SDK Flow) ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:16px;width:400px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.modal .msub{color:var(--sub);font-size:12px;margin-bottom:20px}
+.modal-body{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.modal-row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0}
+.modal-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:10px;font-size:14px;font-weight:700}
+.modal-step{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;margin-bottom:6px;font-size:12px}
+.modal-step.done{background:rgba(34,197,94,.08);color:var(--green)}
+.modal-step.active{background:rgba(240,160,48,.08);color:var(--gold)}
+.modal-step.wait{background:transparent;color:var(--sub2)}
+.modal-step svg{width:16px;height:16px;flex-shrink:0}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#0f2d1f;border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:9999;min-width:320px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast.err-toast{background:#2d0f0f;border-color:rgba(239,68,68,.3)}
+.tico{width:22px;height:22px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tico.err{background:var(--red)}
+.tico svg{width:12px;height:12px;color:#000}
+.tbody h4{font-size:12px;font-weight:700}
+.tbody p{font-size:11px;color:var(--sub);margin-top:1px}
+.tclose{background:none;border:none;color:var(--sub);cursor:pointer;margin-left:auto;font-size:16px}
+</style>
+</head>
+<body>
+
+<!-- ═══════ MOBILE TOP BAR ═══════ -->
+<div class="mob-top">
+  <div class="mlogo">π</div>
+  <div class="mname">PioneerPIX</div>
+  <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside id="sidebar">
+  <div class="logo">
+    <div class="logo-mark">π</div>
+    <div><div class="logo-name">PioneerPIX</div><div class="logo-sub">Pi Network Payments</div></div>
+  </div>
+
+  <!-- Pi Auth Status -->
+  <div class="auth-banner warn" id="authBanner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="authBannerText">Authenticate with Pi to continue</span>
+  </div>
+
+  <div class="ns">
+    <div class="nl">Payments</div>
+    <div class="ni" onclick="nav('send',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span>Send Pi</span></div>
+    <div class="ni" onclick="nav('batch',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Batch Payments</span><span class="badge bgg">Pay</span></div>
+    <div class="ni" onclick="nav('queue',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Payment Queue</span></div>
+    <div class="ni active" onclick="nav('links',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Payment Links</span></div>
+    <div class="ni" onclick="nav('invoices',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Invoices</span></div>
+    <div class="ni" onclick="nav('balance',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Balance</span><span class="badge bgp">Unified</span></div>
+  </div>
+
+  <div class="ns">
+    <div class="nl">App Kit</div>
+    <div class="ni" onclick="nav('schedule',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Schedule</span><span class="badge bg">New</span></div>
+    <div class="ni" onclick="nav('history',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 9 9 9"/></svg><span>History</span></div>
+    <div class="ni" onclick="nav('settings',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></div>
+  </div>
+
+  <div class="wfooter">
+    <div class="wcard">
+      <div class="wcard-top"><span class="wlbl">Pi Wallet</span><div class="wdot" id="wdot"></div></div>
+      <div class="wbal" id="wbal">0.00</div>
+      <div class="wunit">π Pi</div>
+      <div class="wuser" id="wuser">Not authenticated</div>
+      <div class="netrow">
+        <button class="nbtn">Pi Testnet</button>
+        <button class="nbtn">Pi Browser</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════ MAIN ══════════ -->
+<main>
+  <div class="topbar">
+    <div class="phead">
+      <div class="picon" id="topIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+      <div class="ptitle"><h1 id="topTitle">Payment Links</h1><p id="topSub">Create shareable payment links for quick transfers</p></div>
+    </div>
+    <div class="tright">
+      <button class="pill-btn"><span class="sdot"></span>Sandbox (Testnet)</button>
+      <button class="auth-btn" id="authBtn" onclick="authenticatePi()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span id="authBtnText">Authenticate with Pi</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ PAYMENT LINKS ════ -->
+  <div class="page active" id="page-links">
+    <div class="scroll">
+      <div class="frow">
+        <div class="fcard"><div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>Create Link</h4><p>Get a payment link in seconds</p></div></div>
+        <div class="fcard"><div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div><h4>Share Easily</h4><p>Send to anyone, anywhere</p></div></div>
+        <div class="fcard"><div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>Safe &amp; Secure</h4><p>Pi's native trust layer</p></div></div>
+        <div class="fcard"><div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><h4>Track Real-time</h4><p>See status and history</p></div></div>
+      </div>
+      <div class="two-col" style="align-items:start">
+        <div class="sgap">
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Create Payment Link</div>
+            <div class="fr2" style="margin-bottom:12px">
+              <div class="fg">
+                <label class="fl">Amount (π)</label>
+                <input class="fi" id="lnkAmt" type="number" value="1.00" step="0.01" min="0.001" oninput="updatePreview()">
+                <div class="chips" style="margin-top:8px">
+                  <button class="chip" onclick="addA(1)">+1</button><button class="chip" onclick="addA(5)">+5</button><button class="chip" onclick="addA(10)">+10</button><button class="chip" onclick="addA(50)">+50</button><button class="chip" onclick="addA(100)">+100</button>
+                </div>
+              </div>
+              <div class="fg">
+                <label class="fl">Memo (Optional)</label>
+                <input class="fi" id="lnkMemo" placeholder="What's this payment for?">
+              </div>
+            </div>
+            <div class="fr2">
+              <div class="fg">
+                <label class="fl">Recipient (Optional)</label>
+                <input class="fi" id="lnkRecip" placeholder="Pre-fill recipient @username">
+              </div>
+              <div class="fg">
+                <label class="fl">&nbsp;</label>
+                <button class="btn-gold full" id="genLinkBtn" onclick="generateLink()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  Generate Payment Link
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap">
+              <div class="tabs">
+                <button class="tab active" onclick="filterL('all',this)">My Links <span id="lcnt">0</span></button>
+                <button class="tab" onclick="filterL('active',this)">Active <span id="lactive">0</span></button>
+                <button class="tab" onclick="filterL('used',this)">Used <span id="lused">0</span></button>
+                <button class="tab" onclick="filterL('expired',this)">Expired <span id="lexpired">0</span></button>
+              </div>
+              <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" placeholder="Search links..." oninput="searchL(this.value)"></div>
+            </div>
+            <table class="tbl"><thead><tr><th style="width:40px"></th><th>Amount</th><th>Memo</th><th>Created</th><th>Status</th><th>Actions</th></tr></thead><tbody id="linksBody"></tbody></table>
+          </div>
+        </div>
+        <div class="sgap">
+          <div class="stat"><div class="slbl">Payment Links Total</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">+0%</span><span class="sper">vs. last 24h</span></div></div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Payment Link Preview</div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px">
+              <div class="pcirc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+              <div class="pamt" id="previewAmt">1.00 <span class="ppi">π</span></div>
+              <div style="font-size:12px;color:var(--sub)">Payment Link</div>
+              <span class="pill p-active">✦ Active</span>
+              <div style="font-size:11px;color:var(--sub);margin-top:2px">Expires in 24h (optional)</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn-out" style="flex:1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>QR Code</button>
+              <button class="btn-out" style="flex:1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share Link</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>How it works</div>
+            <div class="hstep"><div class="hsico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div><div style="font-size:12.5px;font-weight:600">1. Set Amount</div><div style="font-size:11px;color:var(--sub);margin-top:1px">Choose the Pi amount</div></div></div>
+            <div class="hstep"><div class="hsico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div><div style="font-size:12.5px;font-weight:600">2. Generate Link</div><div style="font-size:11px;color:var(--sub);margin-top:1px">Create your payment link</div></div></div>
+            <div class="hstep"><div class="hsico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div><div><div style="font-size:12.5px;font-weight:600">3. Share</div><div style="font-size:11px;color:var(--sub);margin-top:1px">Send to anyone</div></div></div>
+            <div class="hstep"><div class="hsico done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><div style="font-size:12.5px;font-weight:600">4. Receive Payment</div><div style="font-size:11px;color:var(--sub);margin-top:1px">Via Pi SDK payment flow</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SEND PI ════ -->
+  <div class="page" id="page-send">
+    <div class="scroll">
+      <div class="two-col" style="align-items:start;grid-template-columns:1fr 240px">
+        <div class="sgap">
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send Pi</div>
+            <div style="background:rgba(240,160,48,.07);border:1px solid rgba(240,160,48,.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--gold)">
+              <strong>Pi SDK Payment Flow</strong> — Payments are processed via <code>Pi.createPayment()</code> with server-side approval and completion callbacks.
+            </div>
+            <div class="fr2" style="margin-bottom:14px">
+              <div class="fg"><label class="fl">Recipient @username</label><input class="fi" id="sendTo" placeholder="@username" style="font-size:14px;padding:12px 14px"></div>
+              <div class="fg">
+                <label class="fl">Amount (π)</label>
+                <input class="fi" id="sendAmt" type="number" placeholder="0.00" step="0.01" min="0.001" oninput="updateSendSummary()" style="font-size:16px;padding:12px 14px;font-weight:700">
+                <div class="chips" style="margin-top:10px"><button class="chip" onclick="setSA(1)" style="font-size:12px;padding:6px 14px">1π</button><button class="chip" onclick="setSA(5)" style="font-size:12px;padding:6px 14px">5π</button><button class="chip" onclick="setSA(10)" style="font-size:12px;padding:6px 14px">10π</button><button class="chip" onclick="setSA(25)" style="font-size:12px;padding:6px 14px">25π</button></div>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:14px"><label class="fl">Memo</label><input class="fi" id="sendMemo" placeholder="What's this payment for?" style="font-size:14px;padding:12px 14px"></div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:var(--sub)">Amount</span><span id="sAmt" style="font-weight:600">0.000 π</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:var(--sub)">Network Fee</span><span style="color:var(--sub)">~0.001 π</span></div>
+              <div class="divider" style="margin:10px 0"></div>
+              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>Total</span><span id="sTotal" style="color:var(--gold)">0.001 π</span></div>
+            </div>
+            <button class="btn-gold full" id="sendBtn" onclick="initiatePiPayment('send')" style="font-size:14px;padding:13px 18px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Send Pi via Pi SDK
+            </button>
+          </div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Address Book</div>
+            <div style="text-align:center;padding:16px;color:var(--sub2);font-size:12px">No saved contacts — send to any @username</div>
+          </div>
+        </div>
+        <div class="sgap">
+          <div class="stat"><div class="slbl">Available Balance</div><div class="sval" id="balVal">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt" id="balNet">Testnet</span></div></div>
+          <div class="stat"><div class="slbl">Sent Today</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 tx</span></div></div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 9 9 9"/></svg>Recent Sends</div>
+            <div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No recent sends — your transactions appear here after sending Pi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ BATCH PAYMENTS ════ -->
+  <div class="page" id="page-batch">
+    <div class="scroll">
+      <div class="two-col" style="align-items:start">
+        <div class="sgap">
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Batch Payment</div>
+            <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11.5px;color:var(--blue)">
+              Each batch row triggers an individual <code>Pi.createPayment()</code> call — server-side approval required per transaction.
+            </div>
+            <div class="uzone" onclick="toast('CSV upload ready — connect Pi wallet to proceed','')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div class="uzione">Drop CSV or click to upload</div>
+              <div class="uzones">Columns: @username, amount, memo</div>
+            </div>
+            <div class="divider"></div>
+            <div id="batchRows">
+              <div class="fr3" style="margin-bottom:8px;align-items:end">
+                <div class="fg"><label class="fl">@username</label><input class="fi" placeholder="@username"></div>
+                <div class="fg"><label class="fl">Amount (π)</label><input class="fi" type="number" placeholder="0.00"></div>
+                <div class="fg"><label class="fl">Memo</label><input class="fi" placeholder="Optional"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn-out" onclick="addBR()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Row</button>
+              <button class="btn-gold" style="flex:1" onclick="initiatePiPayment('batch')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Send All via Pi SDK</button>
+            </div>
+          </div>
+        </div>
+        <div class="sgap">
+          <div class="stat"><div class="slbl">Recipients</div><div class="sval" style="font-size:32px">1</div></div>
+          <div class="stat"><div class="slbl">Total Amount</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Est. fee: ~0.01π</span></div></div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 9 9 9"/></svg>Recent Batches</div>
+            <table class="tbl"><thead><tr><th>Date</th><th>Recipients</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td colspan="4"><div style="text-align:center;padding:16px;color:var(--sub2);font-size:12px">No batch history yet</div></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ QUEUE ════ -->
+  <div class="page" id="page-queue">
+    <div class="scroll">
+      <div class="two-col" style="align-items:start">
+        <div class="sgap">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div class="ctitle" style="margin-bottom:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Payment Queue</div>
+              <button class="btn-out" onclick="toast('Queue cleared','')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Clear All</button>
+            </div>
+            <div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No payments in queue</div>
+            <div class="divider"></div>
+            <button class="btn-gold full" onclick="initiatePiPayment('queue')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Process All (0) via Pi SDK</button>
+          </div>
+        </div>
+        <div class="sgap">
+          <div class="stat"><div class="slbl">Queued Payments</div><div class="sval" style="font-size:32px">0</div></div>
+          <div class="stat"><div class="slbl">Total Queued</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          <div class="card"><div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Queue Tips</div><div style="font-size:12px;color:var(--sub);line-height:1.8">• Each payment calls <code>Pi.createPayment()</code><br>• Server must approve via <code>/payments/approve</code><br>• Complete via <code>/payments/complete</code><br>• Never complete before server confirms txID</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ INVOICES ════ -->
+  <div class="page" id="page-invoices">
+    <div class="scroll">
+      <div class="sgap">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+          <div class="four-col" style="flex:1">
+            <div class="stat"><div class="slbl">Total Invoiced</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+            <div class="stat"><div class="slbl">Paid</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
+            <div class="stat"><div class="slbl">Pending</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
+            <div class="stat"><div class="slbl">Overdue</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
+          </div>
+          <button class="btn-gold" onclick="toast('New invoice created!','')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Invoice</button>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div class="tabs"><button class="tab active">All 0</button><button class="tab">Paid 0</button><button class="tab">Pending 0</button><button class="tab">Overdue 0</button></div>
+            <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" placeholder="Search invoices..."></div>
+          </div>
+          <table class="tbl"><thead><tr><th></th><th>Invoice #</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td colspan="7"><div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No invoices yet — create one above</div></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ BALANCE ════ -->
+  <div class="page" id="page-balance">
+    <div class="scroll">
+      <div class="sgap">
+        <div class="four-col">
+          <div class="stat"><div class="slbl">Total Balance</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Unified</span></div></div>
+          <div class="stat"><div class="slbl">Pi Network</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Testnet</span></div></div>
+          <div class="stat"><div class="slbl">Locked (Mining)</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          <div class="stat"><div class="slbl">Available</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Spendable</span></div></div>
+        </div>
+        <div class="two-col" style="align-items:start">
+          <div class="sgap">
+            <div class="card">
+              <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Assets</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0"><div style="width:34px;height:34px;border-radius:50%;background:rgba(240,160,48,.15);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">π</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Pi (π)</div><div style="font-size:11px;color:var(--sub)">Pi Network</div></div><div style="text-align:right"><div style="font-weight:700">0.00 π</div><div style="font-size:11px;color:var(--sub)">—</div></div></div>
+            </div>
+            <div class="card">
+              <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Activity — Last 7 days</div>
+              <div style="display:flex;align-items:flex-end;gap:6px;height:80px;padding:0 4px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--border2);border-radius:3px 3px 0 0;width:100%;height:40%"></div><div style="font-size:9px;color:var(--sub2)">M</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--gold);border-radius:3px 3px 0 0;width:100%;height:60%"></div><div style="font-size:9px;color:var(--sub2)">T</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--border2);border-radius:3px 3px 0 0;width:100%;height:20%"></div><div style="font-size:9px;color:var(--sub2)">W</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--gold);border-radius:3px 3px 0 0;width:100%;height:80%"></div><div style="font-size:9px;color:var(--sub2)">T</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--border2);border-radius:3px 3px 0 0;width:100%;height:30%"></div><div style="font-size:9px;color:var(--sub2)">F</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--gold);border-radius:3px 3px 0 0;width:100%;height:50%"></div><div style="font-size:9px;color:var(--sub2)">S</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--border2);border-radius:3px 3px 0 0;width:100%;height:10%"></div><div style="font-size:9px;color:var(--sub2)">S</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="sgap">
+            <div class="card"><div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>Portfolio</div>
+              <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Pi (π)</span><span>—</span></div><div class="pw"><div class="pb" style="width:0%"></div></div></div>
+            </div>
+            <div class="card"><div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Quick Actions</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn-gold full" onclick="nav('send',null)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send Pi</button>
+                <button class="btn-out full" onclick="nav('links',null)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Request via Link</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SCHEDULE ════ -->
+  <div class="page" id="page-schedule">
+    <div class="scroll">
+      <div class="two-col" style="align-items:start">
+        <div class="sgap">
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Scheduled Payment</div>
+            <div class="fr2" style="margin-bottom:12px">
+              <div class="fg"><label class="fl">Recipient</label><input class="fi" placeholder="@username"></div>
+              <div class="fg"><label class="fl">Amount (π)</label><input class="fi" type="number" placeholder="0.00"></div>
+            </div>
+            <div class="fr2" style="margin-bottom:12px">
+              <div class="fg"><label class="fl">Frequency</label><select class="fi"><option>Daily</option><option>Weekly</option><option selected>Monthly</option></select></div>
+              <div class="fg"><label class="fl">Start Date</label><input class="fi" type="date" value="2026-08-10"></div>
+            </div>
+            <div class="fg" style="margin-bottom:14px"><label class="fl">Memo</label><input class="fi" placeholder="Subscription, salary, etc."></div>
+            <button class="btn-gold full" onclick="toast('Scheduled payment created! Each execution will call Pi.createPayment()','')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule Payment</button>
+          </div>
+          <div class="card">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Active Schedules</div>
+            <div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No active schedules</div>
+          </div>
+        </div>
+        <div class="sgap">
+          <div class="stat"><div class="slbl">Active Schedules</div><div class="sval" style="font-size:32px">0</div></div>
+          <div class="stat"><div class="slbl">Monthly Outflow</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          <div class="card"><div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Upcoming Payments</div>
+            <div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No upcoming payments</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ HISTORY ════ -->
+  <div class="page" id="page-history">
+    <div class="scroll">
+      <div class="sgap">
+        <div class="four-col">
+          <div class="stat"><div class="slbl">Total Sent</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          <div class="stat"><div class="slbl">Total Received</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          <div class="stat"><div class="slbl">Transactions</div><div class="sval" style="font-size:32px">0</div></div>
+          <div class="stat"><div class="slbl">Net Flow</div><div class="sval" style="color:var(--sub)">0.00 <span style="color:var(--sub)">π</span></div></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div class="tabs"><button class="tab active">All</button><button class="tab">Sent</button><button class="tab">Received</button></div>
+            <div style="display:flex;gap:8px">
+              <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" placeholder="Search transactions..."></div>
+              <button class="btn-out"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+            </div>
+          </div>
+          <div style="text-align:center;padding:24px;color:var(--sub2);font-size:12px">No transactions yet — your Pi payment history will appear here</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SETTINGS ════ -->
+  <div class="page" id="page-settings">
+    <div class="scroll">
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start">
+        <div class="card snav" style="padding:10px">
+          <div class="si2 active" onclick="sts(this,'sp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</div>
+          <div class="si2" onclick="sts(this,'sn')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</div>
+          <div class="si2" onclick="sts(this,'ss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</div>
+          <div class="si2" onclick="sts(this,'sk')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>API Keys</div>
+          <div class="si2" onclick="sts(this,'sa')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>About</div>
+        </div>
+        <div class="sgap">
+          <div class="card" id="sp">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</div>
+            <div class="fr2" style="margin-bottom:12px"><div class="fg"><label class="fl">Display Name</label><input class="fi" value="Pioneer User"></div><div class="fg"><label class="fl">Pi Username</label><input class="fi" id="piUsernameInput" value="" placeholder="Auto-filled after Pi auth"></div></div>
+            <button class="btn-gold" onclick="toast('Profile saved!','')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Save Changes</button>
+          </div>
+          <div class="card" id="sn" style="display:none">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</div>
+            <div class="trow"><div class="tinfo"><h4>Payment Received</h4><p>Notify when Pi is received</p></div><label class="tog"><input type="checkbox" checked><span class="sl"></span></label></div>
+            <div class="trow"><div class="tinfo"><h4>Payment Sent</h4><p>Notify when a payment is sent</p></div><label class="tog"><input type="checkbox" checked><span class="sl"></span></label></div>
+            <div class="trow"><div class="tinfo"><h4>Link Used</h4><p>Notify when a payment link is used</p></div><label class="tog"><input type="checkbox" checked><span class="sl"></span></label></div>
+            <div class="trow"><div class="tinfo"><h4>Scheduled Payment</h4><p>Remind before scheduled payments</p></div><label class="tog"><input type="checkbox"><span class="sl"></span></label></div>
+          </div>
+          <div class="card" id="ss" style="display:none">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</div>
+            <div class="trow"><div class="tinfo"><h4>Transaction Confirmation</h4><p>Confirm every outgoing Pi.createPayment()</p></div><label class="tog"><input type="checkbox" checked><span class="sl"></span></label></div>
+            <div class="trow"><div class="tinfo"><h4>Auto-lock</h4><p>Lock after 5 min of inactivity</p></div><label class="tog"><input type="checkbox" checked><span class="sl"></span></label></div>
+            <div class="divider"></div>
+            <div style="background:rgba(240,160,48,.07);border:1px solid rgba(240,160,48,.2);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--gold)">
+              ⚠️ Never share your Pi API Key. Store it in a secure environment variable on your server, never in client-side code.
+            </div>
+          </div>
+          <div class="card" id="sk" style="display:none">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>API Keys</div>
+            <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:11.5px;color:var(--red)">
+              🔒 API Keys must be stored <strong>server-side only</strong>. Used for <code>/payments/approve</code> and <code>/payments/complete</code> endpoints. Authorization: Key &lt;YOUR_KEY&gt;
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:600">Server API Key</span><span class="pill p-active">Active</span></div>
+              <div style="font-family:monospace;font-size:12px;color:var(--sub)">pk_••••••••••••••••••••••••••••••••</div>
+              <div style="font-size:11px;color:var(--sub);margin-top:6px">Get your key at: pi://develop.pinet.com → Your App → API Key</div>
+            </div>
+          </div>
+          <div class="card" id="sa" style="display:none">
+            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>About PioneerPIX</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div style="width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#000;box-shadow:0 4px 20px rgba(240,160,48,.4)">π</div><div><div style="font-size:18px;font-weight:800">PioneerPIX</div><div style="color:var(--sub);font-size:12px;margin-top:2px">Pi Network Payment Platform</div></div></div>
+            <div class="divider"></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px"><span style="color:var(--sub)">Version</span><span style="font-weight:600">1.0.0 — Testnet</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;border-top:1px solid var(--border)"><span style="color:var(--sub)">Pi SDK</span><span style="font-weight:600">v2.0 — sdk.minepi.com</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;border-top:1px solid var(--border)"><span style="color:var(--sub)">API Base</span><span style="font-weight:600;font-family:monospace">api.minepi.com/v2</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;border-top:1px solid var(--border)"><span style="color:var(--sub)">Scopes</span><span style="font-weight:600;font-family:monospace">username, payments</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;border-top:1px solid var(--border)"><span style="color:var(--sub)">Mode</span><span style="font-weight:600">Sandbox (sandbox: true)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════ MOBILE BOTTOM NAV ═══════ -->
+<div class="mob-nav">
+  <div class="mob-nav-inner">
+    <div class="mob-nav-item active" onclick="nav('send',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <span>Send</span>
+    </div>
+    <div class="mob-nav-item" onclick="nav('links',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      <span>Links</span>
+    </div>
+    <div class="mob-nav-item" onclick="nav('queue',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Queue</span>
+    </div>
+    <div class="mob-nav-item" onclick="nav('balance',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Balance</span>
+    </div>
+    <div class="mob-nav-item" onclick="nav('settings',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PI PAYMENT MODAL ════ -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <h2>Pi Payment Flow</h2>
+    <div class="msub">Powered by Pi SDK — <code>Pi.createPayment()</code></div>
+    <div class="modal-body">
+      <div class="modal-row"><span style="color:var(--sub)">To</span><span id="mTo">—</span></div>
+      <div class="modal-row"><span style="color:var(--sub)">Amount</span><span id="mAmt">—</span></div>
+      <div class="modal-row"><span style="color:var(--sub)">Memo</span><span id="mMemo">—</span></div>
+      <div class="modal-row total"><span>Total</span><span id="mTotal">—</span></div>
+    </div>
+    <div id="paySteps">
+      <div class="modal-step active" id="step1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>1. createPayment() called</span></div>
+      <div class="modal-step wait" id="step2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>2. onReadyForServerApproval → POST /payments/approve</span></div>
+      <div class="modal-step wait" id="step3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>3. Pioneer confirms in Pi Browser</span></div>
+      <div class="modal-step wait" id="step4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>4. onReadyForServerCompletion → POST /payments/complete</span></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-out" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn-gold" style="flex:1" id="modalConfirmBtn" onclick="runPaymentFlow()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Confirm & Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl">
+  <div class="tico" id="ticoEl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+  <div class="tbody"><h4 id="tTitle">Done!</h4><p id="tSub"></p></div>
+  <button class="tclose" onclick="closeToast()">✕</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// PI SDK STATE
+// ═══════════════════════════════════════════════
+const Pi = window.Pi; // já inicializado no <head>
+let piAuth = null;    // armazena o AuthResult do Pi.authenticate()
+let piUser = null;    // { uid, username, accessToken }
+
+// ── Auth banner + wallet footer state ──
+function setAuthState(state, msg) {
+  const b = document.getElementById('authBanner');
+  b.className = 'auth-banner ' + state;
+  document.getElementById('authBannerText').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════
+// PI AUTHENTICATE
+// Scopes: ['username','payments'] conforme documentação
+// onIncompletePaymentFound: obrigatório — trata pagamentos incompletos
+// ═══════════════════════════════════════════════
+function authenticatePi() {
+  const btn = document.getElementById('authBtn');
+  btn.disabled = true;
+  document.getElementById('authBtnText').textContent = 'Authenticating…';
+  setAuthState('warn','Requesting Pi authentication…');
+
+  const scopes = ['username', 'payments'];
+
+  // Callback obrigatório para pagamentos incompletos
+  // (ex: usuário fechou o app no meio de um pagamento)
+  function onIncompletePaymentFound(payment) {
+    console.warn('[PioneerPIX] Incomplete payment found:', payment);
+    // Em produção: enviar ao servidor para cancelar ou completar
+    // POST /payments/{payment.identifier}/complete ou /cancel
+    toast('Incomplete payment detected', 'paymentId: ' + payment.identifier);
+  }
+
+  Pi.authenticate(scopes, onIncompletePaymentFound)
+    .then(function(auth) {
+      piAuth = auth;
+      piUser = {
+        uid:         auth.user.uid,
+        username:    auth.user.username,
+        accessToken: auth.accessToken,
+      };
+      onAuthSuccess();
+    })
+    .catch(function(err) {
+      console.error('[PioneerPIX] Auth error:', err);
+      onAuthError(err);
+    });
+}
+
+function onAuthSuccess() {
+  // Update UI
+  document.getElementById('wdot').classList.add('on');
+  document.getElementById('wuser').textContent = '@' + piUser.username;
+  document.getElementById('wbal').textContent  = '0.00'; // balance via /me futuramente
+
+  const btn = document.getElementById('authBtn');
+  btn.classList.add('connected');
+  document.getElementById('authBtnText').textContent = '@' + piUser.username;
+  btn.disabled = false;
+
+  setAuthState('ok', 'Authenticated as @' + piUser.username);
+
+  // Preencher campo de username em settings
+  const uf = document.getElementById('piUsernameInput');
+  if(uf) uf.value = '@' + piUser.username;
+
+  toast('Authenticated with Pi!', 'Welcome, @' + piUser.username);
+}
+
+function onAuthError(err) {
+  const btn = document.getElementById('authBtn');
+  btn.disabled = false;
+  document.getElementById('authBtnText').textContent = 'Authenticate with Pi';
+  setAuthState('err', 'Authentication failed — try again');
+  toast('Authentication failed', err.message || 'Run app inside Pi Browser', true);
+}
+
+// ═══════════════════════════════════════════════
+// PI PAYMENT FLOW
+// Implementa as 4 fases obrigatórias:
+//  1. Pi.createPayment(data, callbacks)
+//  2. onReadyForServerApproval → POST /v2/payments/{id}/approve
+//  3. Pioneer interacts (Pi Browser handles)
+//  4. onReadyForServerCompletion → POST /v2/payments/{id}/complete
+// ═══════════════════════════════════════════════
+let pendingPayment = null;
+
+function initiatePiPayment(ctx) {
+  if(!piUser) {
+    toast('Authenticate with Pi first','Click "Authenticate with Pi" above', true);
+    return;
+  }
+  // Populate modal
+  const amt  = ctx === 'send'
+    ? (parseFloat(document.getElementById('sendAmt').value) || 0)
+    : (parseFloat(document.getElementById('lnkAmt').value) || 0);
+  const memo = ctx === 'send'
+    ? (document.getElementById('sendMemo').value || 'PioneerPIX Payment')
+    : (document.getElementById('lnkMemo').value || 'PioneerPIX Payment');
+  const to   = ctx === 'send'
+    ? (document.getElementById('sendTo').value || 'recipient')
+    : 'Payment Link recipient';
+
+  if(amt <= 0) { toast('Enter a valid amount','', true); return; }
+
+  pendingPayment = { amount: amt, memo, to, ctx };
+
+  document.getElementById('mTo').textContent    = to;
+  document.getElementById('mAmt').textContent   = amt.toFixed(3) + ' π';
+  document.getElementById('mMemo').textContent  = memo;
+  document.getElementById('mTotal').textContent = (amt + 0.001).toFixed(3) + ' π';
+
+  // Reset steps
+  ['step1','step2','step3','step4'].forEach((id,i) => {
+    document.getElementById(id).className = 'modal-step ' + (i===0?'active':'wait');
+  });
+  document.getElementById('modalConfirmBtn').disabled = false;
+  document.getElementById('payModal').classList.add('show');
+}
+
+function runPaymentFlow() {
+  if(!pendingPayment || !piUser) return;
+  document.getElementById('modalConfirmBtn').disabled = true;
+
+  const paymentData = {
+    amount:   pendingPayment.amount,
+    memo:     pendingPayment.memo,
+    metadata: {
+      app:     'pioneerpix',
+      context: pendingPayment.ctx,
+      user:    piUser.uid,
+    },
+  };
+
+  // Fase 1: createPayment
+  stepDone('step1');
+  stepActive('step2');
+
+  const paymentCallbacks = {
+    // Fase 2 — Server Side Approval
+    onReadyForServerApproval: function(paymentId) {
+      console.log('[PioneerPIX] onReadyForServerApproval:', paymentId);
+      stepDone('step2');
+      stepActive('step3');
+
+      // Em produção: chamar seu backend que faz:
+      // POST https://api.minepi.com/v2/payments/{paymentId}/approve
+      // Authorization: Key <YOUR_API_KEY>
+      //
+      // Simulando aprovação para fins de demonstração:
+      console.log('[PioneerPIX] Simulating POST /v2/payments/' + paymentId + '/approve');
+      // fetch('/api/payments/approve', { method:'POST', body: JSON.stringify({paymentId}) })
+    },
+
+    // Fase 4 — Server Side Completion
+    onReadyForServerCompletion: function(paymentId, txid) {
+      console.log('[PioneerPIX] onReadyForServerCompletion:', paymentId, txid);
+      stepDone('step3');
+      stepActive('step4');
+
+      // Em produção: chamar seu backend que faz:
+      // POST https://api.minepi.com/v2/payments/{paymentId}/complete
+      // Authorization: Key <YOUR_API_KEY>
+      // Body: { txid }
+      //
+      console.log('[PioneerPIX] Simulating POST /v2/payments/' + paymentId + '/complete, txid=' + txid);
+
+      // Após confirmação do servidor:
+      stepDone('step4');
+      setTimeout(() => {
+        closeModal();
+        toast('Payment completed!', pendingPayment.amount.toFixed(3) + ' π sent — txid: ' + (txid||'pending'));
+        if(pendingPayment.ctx === 'links') {
+          // Adicionar link completado
+          const m = document.getElementById('lnkMemo').value || 'Payment';
+          const now = new Date();
+          links.unshift({id:Date.now(),amount:pendingPayment.amount.toFixed(2),memo:m,created:'Today, '+fmtTime(now),status:'active'});
+          renderLinks();
+        }
+        pendingPayment = null;
+      }, 800);
+    },
+
+    onCancel: function(paymentId) {
+      console.log('[PioneerPIX] Payment cancelled:', paymentId);
+      closeModal();
+      toast('Payment cancelled', 'paymentId: ' + paymentId, true);
+      pendingPayment = null;
+    },
+
+    onError: function(error, payment) {
+      console.error('[PioneerPIX] Payment error:', error, payment);
+      closeModal();
+      toast('Payment error', error.message || 'Unknown error', true);
+      pendingPayment = null;
+    },
+  };
+
+  // Invocar SDK
+  Pi.createPayment(paymentData, paymentCallbacks)
+    .then(function(payment) {
+      console.log('[PioneerPIX] createPayment returned:', payment);
+    })
+    .catch(function(error) {
+      console.error('[PioneerPIX] createPayment error:', error);
+      closeModal();
+      toast('Pi SDK error', error.message || 'Run inside Pi Browser', true);
+    });
+}
+
+function stepDone(id){
+  const el = document.getElementById(id);
+  el.className = 'modal-step done';
+}
+function stepActive(id){
+  const el = document.getElementById(id);
+  el.className = 'modal-step active';
+}
+
+function closeModal(){
+  document.getElementById('payModal').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENT LINKS DATA
+// ═══════════════════════════════════════════════
+const links = [];
+let lf='all', lq='';
+
+function renderLinks(){
+  const b = document.getElementById('linksBody');
+  const d = links.filter(l=>{
+    const ms = lf==='all'||l.status===lf;
+    const q  = lq.toLowerCase();
+    return ms && (!q||l.memo.toLowerCase().includes(q)||l.amount.includes(q));
+  });
+  if(!links.length){
+    b.innerHTML = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--sub2)"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><h3 style="font-size:13px;color:var(--sub);margin-top:6px">No payment links yet</h3><p style="font-size:11px;color:var(--sub2)">Create your first link above</p></div></td></tr>';
+  } else {
+    b.innerHTML = d.map(l=>`
+    <tr>
+      <td><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div></td>
+      <td class="amt">${l.amount} π</td>
+      <td style="color:var(--sub)">${l.memo}</td>
+      <td style="color:var(--sub)">${l.created}</td>
+      <td><span class="pill ${l.status==='active'?'p-active':l.status==='used'?'p-used':'p-expired'}">${l.status==='active'?'✦ Active':l.status==='used'?'● Used':'Expired'}</span></td>
+      <td><div class="ar">
+        <button class="ab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="ab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <button class="ab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+      </div></td>
+    </tr>
+  `).join('');
+  }
+  document.getElementById('lcnt').textContent = links.length;
+  document.getElementById('lactive').textContent = links.filter(l=>l.status==='active').length;
+  document.getElementById('lused').textContent = links.filter(l=>l.status==='used').length;
+  document.getElementById('lexpired').textContent = links.filter(l=>l.status==='expired').length;
+}
+
+function filterL(f,btn){
+  lf=f;
+  document.querySelectorAll('#page-links .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderLinks();
+}
+function searchL(q){ lq=q; renderLinks(); }
+
+function addA(n){
+  const i=document.getElementById('lnkAmt');
+  i.value=(parseFloat(i.value||0)+n).toFixed(2);
+  updatePreview();
+}
+function updatePreview(){
+  const v=parseFloat(document.getElementById('lnkAmt').value)||0;
+  document.getElementById('previewAmt').innerHTML=`${v.toFixed(2)} <span class="ppi">π</span>`;
+}
+
+function generateLink(){
+  // Trigger Pi payment flow — em produção a conclusão cria o link
+  initiatePiPayment('links');
+}
+
+// ═══════════════════════════════════════════════
+// SEND PI
+// ═══════════════════════════════════════════════
+function updateSendSummary(){
+  const v=parseFloat(document.getElementById('sendAmt').value)||0;
+  document.getElementById('sAmt').textContent=(v).toFixed(3)+' π';
+  document.getElementById('sTotal').textContent=(v+0.001).toFixed(3)+' π';
+}
+function setSA(n){ document.getElementById('sendAmt').value=n; updateSendSummary(); }
+
+// ═══════════════════════════════════════════════
+// BATCH
+// ═══════════════════════════════════════════════
+function addBR(){
+  const r=document.createElement('div');
+  r.className='fr3';r.style.marginBottom='8px';r.style.alignItems='end';
+  r.innerHTML='<div class="fg"><input class="fi" placeholder="@username"></div><div class="fg"><input class="fi" type="number" placeholder="0.00"></div><div class="fg"><input class="fi" placeholder="Optional"></div>';
+  document.getElementById('batchRows').appendChild(r);
+}
+
+// ═══════════════════════════════════════════════
+// MOBILE SIDEBAR
+// ═══════════════════════════════════════════════
+function toggleSidebar(){const s=document.getElementById('sidebar');const o=document.getElementById('sidebarOverlay');const b=document.getElementById('mobMenuBtn');const v=s.classList.toggle('open');o.classList.toggle('show',v);b.classList.toggle('open',v)}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');document.getElementById('mobMenuBtn').classList.remove('open')}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const pageMeta = {
+  send:    {title:'Send Pi',         sub:'Transfer Pi to any username'},
+  batch:   {title:'Batch Payments',  sub:'Send Pi to multiple recipients at once'},
+  queue:   {title:'Payment Queue',   sub:'Manage and process your pending payments'},
+  links:   {title:'Payment Links',   sub:'Create shareable payment links for quick transfers'},
+  invoices:{title:'Invoices',        sub:'Create and track payment invoices'},
+  balance: {title:'Unified Balance', sub:'Your consolidated Pi balances'},
+  schedule:{title:'Schedule',        sub:'Automate recurring payments'},
+  history: {title:'History',         sub:'Full transaction history and activity'},
+  settings:{title:'Settings',        sub:'Configure your PioneerPIX account'},
+};
+function nav(pg, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  // sidebar nav item
+  if(el && el.classList.contains('ni')) el.classList.add('active');
+  else { const si=document.querySelector('.ni[onclick*="\''+pg+'\'"]'); if(si)si.classList.add('active'); }
+  // mobile nav item
+  document.querySelectorAll('.mob-nav-item').forEach(n=>n.classList.remove('active'));
+  const mn=document.querySelector('.mob-nav-item[onclick*="\''+pg+'\'"]');
+  if(mn) mn.classList.add('active');
+  const p=document.getElementById('page-'+pg);
+  if(p) p.classList.add('active');
+  const m=pageMeta[pg];
+  if(m){ document.getElementById('topTitle').textContent=m.title; document.getElementById('topSub').textContent=m.sub; }
+  closeSidebar();
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS TABS
+// ═══════════════════════════════════════════════
+const stabs=['sp','sn','ss','sk','sa'];
+function sts(el,id){
+  document.querySelectorAll('.si2').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  stabs.forEach(t=>{const e=document.getElementById(t);if(e)e.style.display='none'});
+  const t=document.getElementById(id);
+  if(t)t.style.display='block';
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let tT;
+function toast(title, sub='', isErr=false){
+  const el=document.getElementById('toastEl');
+  document.getElementById('tTitle').textContent=title;
+  document.getElementById('tSub').textContent=sub;
+  el.className='toast show'+(isErr?' err-toast':'');
+  document.getElementById('ticoEl').className='tico'+(isErr?' err':'');
+  clearTimeout(tT);
+  tT=setTimeout(()=>el.classList.remove('show'),4500);
+}
+function closeToast(){ document.getElementById('toastEl').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function fmtTime(d){
+  const h=d.getHours(),m=String(d.getMinutes()).padStart(2,'0');
+  const ampm=h>=12?'PM':'AM';
+  return `${(h%12)||12}:${m} ${ampm}`;
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderLinks();
+</script>
+</body>
+</html>
