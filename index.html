@@ -243,6 +243,18 @@ aside::-webkit-scrollbar-thumb{background:var(--border2)}
   /* About */
   [style*="width:56px;height:56px"]{width:42px!important;height:42px!important;border-radius:10px!important;font-size:22px!important}
   [style*="font-size:18px;font-weight:800"]{font-size:15px!important}
+
+  /* ═══ Balance tab — mobile dashboard ═══ */
+  #page-balance .four-col{display:flex;flex-direction:column;gap:10px}
+  #page-balance .four-col .stat:first-child{padding:16px;border:1.5px solid rgba(240,160,48,.18);background:linear-gradient(135deg,rgba(240,160,48,.08),rgba(240,160,48,.02))}
+  #page-balance .four-col .stat:first-child .sval{font-size:34px!important}
+  #page-balance .four-col .stat:first-child .slbl{font-size:11.5px;letter-spacing:.3px}
+  #page-balance .bal-sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #page-balance .two-col{display:flex!important;flex-direction:column;gap:10px}
+  #page-balance .card,#page-balance .stat{width:100%!important;max-width:100%!important;box-sizing:border-box}
+  #page-balance .scroll{padding-bottom:16px}
+  #page-balance .btn-gold{width:100%!important;min-height:48px}
+  #page-balance [style*="height:80px"]{height:54px!important}
 }
 @media(max-width:400px){
   .four-col{grid-template-columns:1fr}
@@ -255,6 +267,8 @@ aside::-webkit-scrollbar-thumb{background:var(--border2)}
   .stat{padding:8px}
   .two-col{gap:10px}
   .sgap{gap:10px}
+  #page-balance .four-col .stat:first-child .sval{font-size:28px!important}
+  #page-balance .bal-sub-grid{grid-template-columns:1fr}
 }
 main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:60px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0}
@@ -783,9 +797,11 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
       <div class="sgap">
         <div class="four-col">
           <div class="stat"><div class="slbl">Total Balance</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Unified</span></div></div>
-          <div class="stat"><div class="slbl">Pi Network</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Testnet</span></div></div>
-          <div class="stat"><div class="slbl">Locked (Mining)</div><div class="sval">0.00 <span class="spi">π</span></div></div>
-          <div class="stat"><div class="slbl">Available</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Spendable</span></div></div>
+          <div class="bal-sub-grid">
+            <div class="stat"><div class="slbl">Available</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Spendable</span></div></div>
+            <div class="stat"><div class="slbl">Pi Network</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Testnet</span></div></div>
+            <div class="stat"><div class="slbl">Locked (Mining)</div><div class="sval">0.00 <span class="spi">π</span></div></div>
+          </div>
         </div>
         <div class="two-col" style="align-items:start">
           <div class="sgap">
