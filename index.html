@@ -279,7 +279,6 @@ aside::-webkit-scrollbar-thumb{background:var(--border2)}
   .two-col{gap:10px}
   .sgap{gap:10px}
   #page-balance .four-col .stat:first-child .sval{font-size:28px!important}
-  #page-balance .bal-sub-grid{grid-template-columns:1fr}
 }
 main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:60px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0}
@@ -797,7 +796,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
             <div class="fg"><label class="fl">Amount (π)</label><input class="fi" id="invAmt" type="number" placeholder="0.00" step="0.01" min="0.001"></div>
           </div>
           <div class="fr2" style="margin-bottom:12px">
-            <div class="fg"><label class="fl">Due Date</label><input class="fi" id="invDue" type="date"></div>
+            <div class="fg"><label class="fl">Due Date</label><input class="fi" id="invDue" type="text" placeholder="MM/DD/YYYY" autocomplete="off"></div>
             <div class="fg"><label class="fl">Memo / Description</label><input class="fi" id="invMemo" placeholder="Services, products, etc."></div>
           </div>
           <div style="display:flex;gap:8px">
@@ -824,12 +823,12 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
     <div class="scroll">
       <div class="sgap">
         <div class="four-col">
-          <div class="stat"><div class="slbl">Total Balance</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Unified</span></div></div>
+          <div class="stat" id="balHero"><div class="slbl">Total Balance</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Unified</span></div></div>
           <div class="bal-sub-grid">
             <div class="stat"><div class="slbl">Available</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Spendable</span></div></div>
             <div class="stat"><div class="slbl">Pi Network</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Testnet</span></div></div>
-            <div class="stat"><div class="slbl">Locked (Mining)</div><div class="sval">0.00 <span class="spi">π</span></div></div>
           </div>
+          <div class="stat" id="balLocked"><div class="slbl">Locked (Mining)</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Locked</span></div></div>
         </div>
         <div class="two-col" style="align-items:start">
           <div class="sgap">
@@ -995,9 +994,9 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span>Links</span>
     </div>
-    <div class="mob-nav-item" onclick="nav('queue',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      <span>Queue</span>
+    <div class="mob-nav-item" onclick="nav('invoices',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Invoices</span>
     </div>
     <div class="mob-nav-item" onclick="nav('balance',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1434,7 +1433,8 @@ function toggleNewInvoiceForm(){
   const f = document.getElementById('newInvoiceForm');
   f.style.display = f.style.display === 'none' ? 'block' : 'none';
   if(f.style.display==='block'){
-    document.getElementById('invDue').value = new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+    var d = new Date(Date.now()+7*86400000);
+    document.getElementById('invDue').value = String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0') + '/' + d.getFullYear();
     document.getElementById('invClient').focus();
   }
 }
@@ -1446,10 +1446,11 @@ function createInvoice(){
   const memo = document.getElementById('invMemo').value.trim() || 'Invoice';
   if(!client){ toast('Enter client @username','',true); return; }
   if(amt <= 0){ toast('Enter a valid amount','',true); return; }
-  if(!due){ toast('Select a due date','',true); return; }
+  if(!due || !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(due)){ toast('Use MM/DD/YYYY format','',true); return; }
 
-  const num = 'INV-' + String(invoices.length + 1).padStart(3,'0');
-  const status = new Date(due) < new Date() ? 'overdue' : 'pending';
+  var parts = due.split('/');
+  var dueDate = new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1]));
+  const status = dueDate < new Date() ? 'overdue' : 'pending';
   invoices.unshift({
     id: Date.now(),
     number: num,
@@ -1484,7 +1485,7 @@ function renderInvoices(){
     b.innerHTML = d.map(function(i){
       var sc = i.status==='pending'?'p-pending':i.status==='paid'?'p-done':'p-expired';
       var sl = i.status==='pending'?'Pending':i.status==='paid'?'Paid':'Overdue';
-      var dueShort = i.due ? new Date(i.due).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      var dueShort = i.due || '—';
       return '<tr><td><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div></td><td style="font-weight:600">#' + i.number + '</td><td style="color:var(--sub)">' + escHtml(i.client) + '</td><td class="amt">' + i.amount.toFixed(2) + ' π</td><td style="color:var(--sub);font-size:11px">' + dueShort + '</td><td><span class="pill ' + sc + '">' + sl + '</span></td><td><div class="ar">' + (i.status==='pending'?'<button class="ab" onclick="payInvoice(\''+i.id+'\')" title="Pay with Pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>':'') + '<button class="ab" onclick="deleteInvoice(\''+i.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div></td></tr>';
     }).join('');
   }
