@@ -127,11 +127,22 @@ aside::-webkit-scrollbar-thumb{background:var(--border2)}
   .fr3{grid-template-columns:1fr;gap:10px}
   .frow{grid-template-columns:1fr 1fr;gap:8px}
 
-  /* Send page — stats first, form second on mobile */
+  #page-send .two-col{align-items:stretch!important}
   #page-send .two-col{flex-direction:column!important}
   #page-send .two-col>.sgap:first-child{order:2}
-  #page-send .two-col>.sgap:last-child{order:1}
-
+  #page-send .two-col>.sgap:last-child{order:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  #page-send .two-col>.sgap:last-child .stat{width:100%!important;max-width:100%!important;padding:10px 12px;border-radius:10px}
+  #page-send .two-col>.sgap:last-child .stat .sval{font-size:22px!important}
+  #page-send .two-col>.sgap:last-child .stat .slbl{font-size:10px}
+  #page-send .scroll{padding:10px}
+  #page-send .sgap{gap:10px}
+  /* Queue tab — full-width mobile */
+  #page-queue .two-col{align-items:stretch!important;width:100%!important;max-width:100%!important}
+  #page-queue .two-col>*{width:100%!important;max-width:100%!important}
+  #page-queue .card,#page-queue .stat{width:100%!important;max-width:100%!important;box-sizing:border-box}
+  #page-queue .scroll{padding:8px}
+  #page-queue .sgap{width:100%!important;gap:10px}
+  #page-queue .btn-gold{width:100%!important}
   /* Cards — full width, no overflow */
   .card,.card-sm,.stat{width:100%;max-width:100%;overflow:hidden;box-sizing:border-box}
   .card{padding:12px;border-radius:10px}
