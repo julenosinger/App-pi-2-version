@@ -782,20 +782,36 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
       <div class="sgap">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
           <div class="four-col" style="flex:1">
-            <div class="stat"><div class="slbl">Total Invoiced</div><div class="sval">0.00 <span class="spi">π</span></div></div>
-            <div class="stat"><div class="slbl">Paid</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
-            <div class="stat"><div class="slbl">Pending</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
-            <div class="stat"><div class="slbl">Overdue</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">0 invoices</span></div></div>
+            <div class="stat"><div class="slbl">Total Invoiced</div><div class="sval" id="invTotal">0.00 <span class="spi">π</span></div></div>
+            <div class="stat"><div class="slbl">Paid</div><div class="sval" id="invPaid">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt" id="invPaidCnt">0 invoices</span></div></div>
+            <div class="stat"><div class="slbl">Pending</div><div class="sval" id="invPending">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt" id="invPendingCnt">0 invoices</span></div></div>
+            <div class="stat"><div class="slbl">Overdue</div><div class="sval" id="invOverdue">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt" id="invOverdueCnt">0 invoices</span></div></div>
           </div>
-          <button class="btn-gold" onclick="toast('New invoice created!','')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Invoice</button>
+          <button class="btn-gold" onclick="toggleNewInvoiceForm()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Invoice</button>
+        </div>
+        <!-- New Invoice Form -->
+        <div class="card" id="newInvoiceForm" style="display:none">
+          <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Create Invoice</div>
+          <div class="fr2" style="margin-bottom:12px">
+            <div class="fg"><label class="fl">Client @username</label><input class="fi" id="invClient" placeholder="@username" autocomplete="off"></div>
+            <div class="fg"><label class="fl">Amount (π)</label><input class="fi" id="invAmt" type="number" placeholder="0.00" step="0.01" min="0.001"></div>
+          </div>
+          <div class="fr2" style="margin-bottom:12px">
+            <div class="fg"><label class="fl">Due Date</label><input class="fi" id="invDue" type="date"></div>
+            <div class="fg"><label class="fl">Memo / Description</label><input class="fi" id="invMemo" placeholder="Services, products, etc."></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-gold" style="flex:1" onclick="createInvoice()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Generate Invoice</button>
+            <button class="btn-out" onclick="toggleNewInvoiceForm()">Cancel</button>
+          </div>
         </div>
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-            <div class="tabs"><button class="tab active">All 0</button><button class="tab">Paid 0</button><button class="tab">Pending 0</button><button class="tab">Overdue 0</button></div>
-            <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" placeholder="Search invoices..."></div>
+            <div class="tabs"><button class="tab active" onclick="filterInv('all',this)">All <span id="invAllCnt">0</span></button><button class="tab" onclick="filterInv('paid',this)">Paid <span id="invPaidTabCnt">0</span></button><button class="tab" onclick="filterInv('pending',this)">Pending <span id="invPendingTabCnt">0</span></button><button class="tab" onclick="filterInv('overdue',this)">Overdue <span id="invOverdueTabCnt">0</span></button></div>
+            <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" placeholder="Search invoices..." oninput="searchInv(this.value)"></div>
           </div>
-          <table class="tbl"><thead><tr><th></th><th>Invoice #</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>
+          <table class="tbl"><thead><tr><th></th><th>Invoice #</th><th>Client</th><th>Amount</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="invBody">
             <tr><td colspan="7"><div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No invoices yet — create one above</div></td></tr>
           </tbody></table>
         </div>
@@ -1404,6 +1420,120 @@ function fmtTime(d){
   const ampm=h>=12?'PM':'AM';
   return `${(h%12)||12}:${m} ${ampm}`;
 }
+
+// ═══════════════════════════════════════════════
+// INVOICES
+// ═══════════════════════════════════════════════
+let invoices = [];
+let invFilter = 'all', invQuery = '';
+try { invoices = JSON.parse(localStorage.getItem('pioneerpix_invoices') || '[]'); } catch(e){}
+
+function persistInvoices(){ try{localStorage.setItem('pioneerpix_invoices',JSON.stringify(invoices))}catch(e){} }
+
+function toggleNewInvoiceForm(){
+  const f = document.getElementById('newInvoiceForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if(f.style.display==='block'){
+    document.getElementById('invDue').value = new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+    document.getElementById('invClient').focus();
+  }
+}
+
+function createInvoice(){
+  const client = document.getElementById('invClient').value.trim();
+  const amt = parseFloat(document.getElementById('invAmt').value) || 0;
+  const due = document.getElementById('invDue').value;
+  const memo = document.getElementById('invMemo').value.trim() || 'Invoice';
+  if(!client){ toast('Enter client @username','',true); return; }
+  if(amt <= 0){ toast('Enter a valid amount','',true); return; }
+  if(!due){ toast('Select a due date','',true); return; }
+
+  const num = 'INV-' + String(invoices.length + 1).padStart(3,'0');
+  const status = new Date(due) < new Date() ? 'overdue' : 'pending';
+  invoices.unshift({
+    id: Date.now(),
+    number: num,
+    client: client,
+    amount: amt,
+    due: due,
+    memo: memo,
+    status: status,
+    created: new Date().toISOString()
+  });
+  persistInvoices();
+  renderInvoices();
+  updateInvStats();
+  toggleNewInvoiceForm();
+  // Clear form
+  document.getElementById('invClient').value = '';
+  document.getElementById('invAmt').value = '';
+  document.getElementById('invMemo').value = '';
+  toast('Invoice ' + num + ' created!', amt.toFixed(2) + ' π — ' + client);
+}
+
+function renderInvoices(){
+  const b = document.getElementById('invBody');
+  const d = invoices.filter(function(i){
+    const ms = invFilter === 'all' || i.status === invFilter;
+    const q = invQuery.toLowerCase();
+    return ms && (!q || i.client.toLowerCase().includes(q) || i.number.toLowerCase().includes(q) || i.memo.toLowerCase().includes(q));
+  });
+  if(!invoices.length){
+    b.innerHTML = '<tr><td colspan="7"><div style="text-align:center;padding:20px;color:var(--sub2);font-size:12px">No invoices yet — create one above</div></td></tr>';
+  } else {
+    b.innerHTML = d.map(function(i){
+      var sc = i.status==='pending'?'p-pending':i.status==='paid'?'p-done':'p-expired';
+      var sl = i.status==='pending'?'Pending':i.status==='paid'?'Paid':'Overdue';
+      var dueShort = i.due ? new Date(i.due).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      return '<tr><td><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div></td><td style="font-weight:600">#' + i.number + '</td><td style="color:var(--sub)">' + escHtml(i.client) + '</td><td class="amt">' + i.amount.toFixed(2) + ' π</td><td style="color:var(--sub);font-size:11px">' + dueShort + '</td><td><span class="pill ' + sc + '">' + sl + '</span></td><td><div class="ar">' + (i.status==='pending'?'<button class="ab" onclick="payInvoice(\''+i.id+'\')" title="Pay with Pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>':'') + '<button class="ab" onclick="deleteInvoice(\''+i.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div></td></tr>';
+    }).join('');
+  }
+  document.getElementById('invAllCnt').textContent = invoices.length;
+  document.getElementById('invPaidTabCnt').textContent = invoices.filter(function(i){return i.status==='paid'}).length;
+  document.getElementById('invPendingTabCnt').textContent = invoices.filter(function(i){return i.status==='pending'}).length;
+  document.getElementById('invOverdueTabCnt').textContent = invoices.filter(function(i){return i.status==='overdue'}).length;
+}
+
+function updateInvStats(){
+  document.getElementById('invTotal').innerHTML = invoices.reduce(function(s,i){return s+i.amount},0).toFixed(2) + ' <span class="spi">π</span>';
+  document.getElementById('invPaid').innerHTML = invoices.filter(function(i){return i.status==='paid'}).reduce(function(s,i){return s+i.amount},0).toFixed(2) + ' <span class="spi">π</span>';
+  document.getElementById('invPending').innerHTML = invoices.filter(function(i){return i.status==='pending'}).reduce(function(s,i){return s+i.amount},0).toFixed(2) + ' <span class="spi">π</span>';
+  document.getElementById('invOverdue').innerHTML = invoices.filter(function(i){return i.status==='overdue'}).reduce(function(s,i){return s+i.amount},0).toFixed(2) + ' <span class="spi">π</span>';
+  document.getElementById('invPaidCnt').textContent = invoices.filter(function(i){return i.status==='paid'}).length + ' invoices';
+  document.getElementById('invPendingCnt').textContent = invoices.filter(function(i){return i.status==='pending'}).length + ' invoices';
+  document.getElementById('invOverdueCnt').textContent = invoices.filter(function(i){return i.status==='overdue'}).length + ' invoices';
+}
+
+function filterInv(f, btn){
+  invFilter = f;
+  document.querySelectorAll('#page-invoices .tab').forEach(function(t){t.classList.remove('active')});
+  btn.classList.add('active');
+  renderInvoices();
+}
+function searchInv(q){ invQuery = q; renderInvoices(); }
+
+function payInvoice(id){
+  var inv = invoices.find(function(i){return i.id == id});
+  if(!inv) return;
+  if(!piUser){ toast('Authenticate with Pi first','',true); return; }
+  document.getElementById('sendTo').value = inv.client;
+  document.getElementById('sendAmt').value = inv.amount;
+  document.getElementById('sendMemo').value = inv.number + ': ' + inv.memo;
+  updateSendSummary();
+  nav('send', null);
+  // Mark as paid when payment completes (handled in onPaymentSuccess callback)
+}
+
+function deleteInvoice(id){
+  invoices = invoices.filter(function(i){return i.id != id});
+  persistInvoices();
+  renderInvoices();
+  updateInvStats();
+  toast('Invoice deleted','');
+}
+
+renderInvoices();
+updateInvStats();
 
 // ═══════════════════════════════════════════════
 // INIT
