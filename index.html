@@ -210,6 +210,8 @@ aside::-webkit-scrollbar-thumb{background:var(--border2)}
   .schico svg{width:15px;height:15px}
   .sch-t{font-size:12px}.sch-s{font-size:10px}.sch-a{font-size:13px}
   .citem{padding:8px 10px}
+  .batch-row{flex-direction:column!important;align-items:stretch!important}
+  .batch-row button.ab{align-self:flex-end}
   .av{width:28px;height:28px;font-size:12px}
   .cn{font-size:12px}.ca{font-size:10px}
   .uzone{padding:20px 16px}
@@ -738,37 +740,26 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
           <div class="card">
             <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Batch Payment</div>
             <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11.5px;color:var(--blue)">
-              Each batch row triggers an individual <code>Pi.createPayment()</code> call — server-side approval required per transaction.
+              Each row triggers an individual <code>Pi.createPayment()</code> call. Server-side approval required per transaction.
             </div>
-            <div class="uzone" onclick="toast('CSV upload ready — connect Pi wallet to proceed','')">
+            <div class="uzone" onclick="document.getElementById('batchCsvInput').click()" style="cursor:pointer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <div class="uzione">Drop CSV or click to upload</div>
               <div class="uzones">Columns: @username, amount, memo</div>
+              <input type="file" id="batchCsvInput" accept=".csv" style="display:none" onchange="parseBatchCsv(this)">
             </div>
             <div class="divider"></div>
             <div id="batchRows">
-              <div class="fr3" style="margin-bottom:8px;align-items:end">
-                <div class="fg"><label class="fl">@username</label><input class="fi" placeholder="@username"></div>
-                <div class="fg"><label class="fl">Amount (π)</label><input class="fi" type="number" placeholder="0.00"></div>
-                <div class="fg"><label class="fl">Memo</label><input class="fi" placeholder="Optional"></div>
-              </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
-              <button class="btn-out" onclick="addBR()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Row</button>
-              <button class="btn-gold" style="flex:1" onclick="initiatePiPayment('batch')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Send All via Pi SDK</button>
+              <button class="btn-out" onclick="addBatchRow()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Row</button>
+              <button class="btn-gold" style="flex:1" id="batchSendBtn" onclick="processBatch()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Send All via Pi SDK</button>
             </div>
           </div>
         </div>
         <div class="sgap">
-          <div class="stat"><div class="slbl">Recipients</div><div class="sval" style="font-size:32px">1</div></div>
-          <div class="stat"><div class="slbl">Total Amount</div><div class="sval">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt">Est. fee: ~0.01π</span></div></div>
-          <div class="card">
-            <div class="ctitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 9 9 9"/></svg>Recent Batches</div>
-            <table class="tbl"><thead><tr><th>Date</th><th>Recipients</th><th>Total</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td colspan="4"><div style="text-align:center;padding:16px;color:var(--sub2);font-size:12px">No batch history yet</div></td></tr>
-            </tbody></table>
-          </div>
+          <div class="stat"><div class="slbl">Recipients</div><div class="sval" style="font-size:32px" id="batchRecipients">0</div></div>
+          <div class="stat"><div class="slbl">Total Amount</div><div class="sval" id="batchTotal">0.00 <span class="spi">π</span></div><div class="smeta"><span class="schange nt" id="batchEstFee">Est. fee: ~0.00π</span></div></div>
         </div>
       </div>
     </div>
@@ -1253,20 +1244,26 @@ function initiatePiPayment(ctx) {
     toast('Authenticate with Pi first','Click "Authenticate with Pi" above', true);
     return;
   }
-  // Populate modal
-  const amt  = ctx === 'send'
-    ? (parseFloat(document.getElementById('sendAmt').value) || 0)
-    : (parseFloat(document.getElementById('lnkAmt').value) || 0);
-  const memo = ctx === 'send'
-    ? (document.getElementById('sendMemo').value || 'PioneerPIX Payment')
-    : (document.getElementById('lnkMemo').value || 'PioneerPIX Payment');
-  const to   = ctx === 'send'
-    ? (document.getElementById('sendTo').value || 'recipient')
-    : 'Payment Link recipient';
+  var amt, memo, to;
+
+  if (ctx === 'send') {
+    amt  = parseFloat(document.getElementById('sendAmt').value) || 0;
+    memo = document.getElementById('sendMemo').value || 'PioneerPIX Payment';
+    to   = document.getElementById('sendTo').value || '';
+  } else if (ctx === 'links') {
+    amt  = parseFloat(document.getElementById('lnkAmt').value) || 0;
+    memo = document.getElementById('lnkMemo').value || 'PioneerPIX Payment';
+    to   = document.getElementById('lnkRecip') ? (document.getElementById('lnkRecip').value || '') : '';
+  } else {
+    amt  = 0;
+    memo = 'PioneerPIX Payment';
+    to   = '';
+    toast('Select a payment to process','Use Send Pi or Payment Links', true);
+  }
 
   if(amt <= 0) { toast('Enter a valid amount','', true); return; }
 
-  pendingPayment = { amount: amt, memo, to, ctx };
+  pendingPayment = { amount: amt, memo: memo, to: to, ctx: ctx };
 
   document.getElementById('mTo').textContent    = to;
   document.getElementById('mAmt').textContent   = amt.toFixed(3) + ' π';
@@ -1282,80 +1279,88 @@ function initiatePiPayment(ctx) {
 }
 
 function runPaymentFlow() {
-  if(!pendingPayment || !piUser) return;
+  if(!pendingPayment || !piUser) {
+    toast('Session expired', 'Please authenticate with Pi again', true);
+    return;
+  }
   document.getElementById('modalConfirmBtn').disabled = true;
 
   const paymentData = {
     amount:   pendingPayment.amount,
     memo:     pendingPayment.memo,
     metadata: {
-      app:     'pioneerpix',
-      context: pendingPayment.ctx,
-      user:    piUser.uid,
+      app:       'pioneerpix',
+      context:   pendingPayment.ctx,
+      user:      piUser.uid,
+      recipient: pendingPayment.to || '',
     },
   };
 
-  // Fase 1: createPayment
   stepDone('step1');
   stepActive('step2');
 
   const paymentCallbacks = {
-      // Phase 2 — Server Side Approval (API key kept server-side)
-      onReadyForServerApproval: function(paymentId) {
+      onReadyForServerApproval: async function(paymentId) {
         console.log('[PioneerPIX] onReadyForServerApproval:', paymentId);
-        stepDone('step2');
-        stepActive('step3');
-
-        fetch('/api/payments/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId }),
-        })
-          .then(r => r.json())
-          .then(data => {
-            console.log('[PioneerPIX] Approval response:', data);
-            if (data.error) console.error('[PioneerPIX] Approval error:', data);
-          })
-          .catch(err => console.error('[PioneerPIX] Approve fetch failed:', err));
+        try {
+          const resp = await fetch('/api/payments/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId }),
+          });
+          const data = await resp.json();
+          if (data.error) {
+            console.error('[PioneerPIX] Approval failed:', data);
+            toast('Payment approval failed', data.error || data.details?.message || 'Server error', true);
+            return;
+          }
+          console.log('[PioneerPIX] Approved:', data);
+          stepDone('step2');
+          stepActive('step3');
+        } catch (err) {
+          console.error('[PioneerPIX] Approve error:', err);
+          toast('Payment approval failed', err.message, true);
+        }
       },
 
-      // Phase 4 — Server Side Completion (API key kept server-side)
-      onReadyForServerCompletion: function(paymentId, txid) {
+      onReadyForServerCompletion: async function(paymentId, txid) {
         console.log('[PioneerPIX] onReadyForServerCompletion:', paymentId, txid);
-        stepDone('step3');
-        stepActive('step4');
-
-        fetch('/api/payments/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId, txid }),
-        })
-          .then(r => r.json())
-          .then(data => {
-            console.log('[PioneerPIX] Completion response:', data);
-            if (data.error) {
-              console.error('[PioneerPIX] Completion error:', data);
-              toast('Payment completion failed', data.error, true);
-              return;
-            }
-            stepDone('step4');
-            setTimeout(() => {
-              closeModal();
-              toast('Payment completed!', pendingPayment.amount.toFixed(3) + ' π sent — txid: ' + (txid||'pending'));
-              if(pendingPayment.ctx === 'links') {
-                const m = document.getElementById('lnkMemo').value || 'Payment';
-                const now = new Date();
-                const url = generateDeepLink(pendingPayment.amount, m);
-                links.unshift({id:Date.now(),amount:pendingPayment.amount.toFixed(2),memo:m,created:'Today, '+fmtTime(now),status:'active',url:url});
-                renderLinks();
-              }
-              pendingPayment = null;
-            }, 800);
-          })
-          .catch(err => {
-            console.error('[PioneerPIX] Complete fetch failed:', err);
-            toast('Payment completion failed', err.message, true);
+        try {
+          const resp = await fetch('/api/payments/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId, txid }),
           });
+          const data = await resp.json();
+          if (data.error) {
+            console.error('[PioneerPIX] Completion failed:', data);
+            toast('Payment completion failed', data.error || data.details?.message || 'Server error', true);
+            document.getElementById('modalConfirmBtn').disabled = false;
+            return;
+          }
+          console.log('[PioneerPIX] Completed:', data);
+          stepDone('step3');
+          stepActive('step4');
+          stepDone('step4');
+          var savedPayment = pendingPayment;
+          pendingPayment = null;
+          setTimeout(function() {
+            closeModal();
+            var tx = txid || 'pending';
+            toast('Payment completed!', savedPayment.amount.toFixed(3) + ' π sent — txid: ' + tx);
+            if (savedPayment.ctx === 'links') {
+              var m = savedPayment.memo || 'Payment';
+              var now = new Date();
+              var url = generateDeepLink(savedPayment.amount, m);
+              links.unshift({id:Date.now(),amount:savedPayment.amount.toFixed(2),memo:m,created:'Today, '+fmtTime(now),status:'active',url:url});
+              renderLinks();
+            }
+          }, 800);
+        } catch (err) {
+          console.error('[PioneerPIX] Complete error:', err);
+          toast('Payment completion failed', err.message, true);
+          document.getElementById('modalConfirmBtn').disabled = false;
+        }
       },
 
     onCancel: function(paymentId) {
@@ -1373,7 +1378,6 @@ function runPaymentFlow() {
     },
   };
 
-  // Invocar SDK
   Pi.createPayment(paymentData, paymentCallbacks)
     .then(function(payment) {
       console.log('[PioneerPIX] createPayment returned:', payment);
@@ -1382,6 +1386,7 @@ function runPaymentFlow() {
       console.error('[PioneerPIX] createPayment error:', error);
       closeModal();
       toast('Pi SDK error', error.message || 'Run inside Pi Browser', true);
+      pendingPayment = null;
     });
 }
 
@@ -1579,12 +1584,133 @@ function setSA(n){ document.getElementById('sendAmt').value=n; updateSendSummary
 // ═══════════════════════════════════════════════
 // BATCH
 // ═══════════════════════════════════════════════
-function addBR(){
-  const r=document.createElement('div');
-  r.className='fr3';r.style.marginBottom='8px';r.style.alignItems='end';
-  r.innerHTML='<div class="fg"><input class="fi" placeholder="@username"></div><div class="fg"><input class="fi" type="number" placeholder="0.00"></div><div class="fg"><input class="fi" placeholder="Optional"></div>';
+var batchRowIdx = 0;
+
+function addBatchRow(to, amt, memo){
+  var i = batchRowIdx++;
+  var r = document.createElement('div');
+  r.className = 'batch-row'; r.style.display = 'flex'; r.style.gap = '8px'; r.style.marginBottom = '8px'; r.style.alignItems = 'end';
+  r.innerHTML = '<div class="fg" style="flex:1"><label class="fl">@username</label><input class="fi batch-to" id="batch-to-' + i + '" value="' + escHtml(to||'') + '" placeholder="@username"></div>' +
+    '<div class="fg" style="flex:1"><label class="fl">Amount (π)</label><input class="fi batch-amt" id="batch-amt-' + i + '" type="number" value="' + (amt||'') + '" placeholder="0.00" step="0.01" min="0.001" oninput="updateBatchStats()"></div>' +
+    '<div class="fg" style="flex:1"><label class="fl">Memo</label><input class="fi batch-memo" id="batch-memo-' + i + '" value="' + escHtml(memo||'') + '" placeholder="Optional"></div>' +
+    '<button class="ab" onclick="removeBatchRow(this.parentElement)" title="Remove" style="flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
   document.getElementById('batchRows').appendChild(r);
+  updateBatchStats();
 }
+
+function removeBatchRow(el){
+  el.remove();
+  updateBatchStats();
+}
+
+function updateBatchStats(){
+  var rows = document.querySelectorAll('#batchRows .batch-row');
+  var total = 0;
+  var recipients = 0;
+  rows.forEach(function(r){
+    var amt = parseFloat(r.querySelector('.batch-amt')?.value) || 0;
+    if (amt > 0) {
+      total += amt;
+      recipients++;
+    }
+  });
+  document.getElementById('batchRecipients').textContent = recipients;
+  document.getElementById('batchTotal').innerHTML = total.toFixed(2) + ' <span class="spi">π</span>';
+  document.getElementById('batchEstFee').textContent = 'Est. fee: ~' + (recipients * 0.001).toFixed(3) + 'π';
+}
+
+function processBatch(){
+  if (!piUser) { toast('Authenticate with Pi first','',true); return; }
+
+  var rows = document.querySelectorAll('#batchRows .batch-row');
+  var payments = [];
+  rows.forEach(function(r){
+    var to = (r.querySelector('.batch-to')?.value || '').trim();
+    var amt = parseFloat(r.querySelector('.batch-amt')?.value) || 0;
+    var memo = (r.querySelector('.batch-memo')?.value || '').trim() || 'PioneerPIX Batch';
+    if (to && amt > 0) payments.push({ to: to, amount: amt, memo: memo });
+  });
+
+  if (!payments.length) { toast('Enter at least one valid recipient and amount','',true); return; }
+
+  document.getElementById('batchSendBtn').disabled = true;
+  document.getElementById('batchSendBtn').textContent = 'Processing ' + payments.length + ' payments…';
+
+  processBatchPayments(payments, 0);
+}
+
+async function processBatchPayments(payments, idx){
+  if (idx >= payments.length) {
+    document.getElementById('batchSendBtn').disabled = false;
+    document.getElementById('batchSendBtn').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Send All via Pi SDK';
+    toast('Batch completed!', payments.length + ' payments processed', false);
+    return;
+  }
+
+  var p = payments[idx];
+  toast('Processing ' + (idx + 1) + ' of ' + payments.length, '@' + p.to + ' — ' + p.amount.toFixed(2) + ' π', false);
+
+  pendingPayment = { amount: p.amount, memo: p.memo, to: p.to, ctx: 'batch' };
+
+  var paymentData = {
+    amount: p.amount,
+    memo: p.memo,
+    metadata: { app: 'pioneerpix', context: 'batch', user: piUser.uid, recipient: p.to },
+  };
+
+  // Wrap Pi.createPayment in a promise so we can chain sequential payments
+  await new Promise(function(resolve, reject){
+    Pi.createPayment(paymentData, {
+      onReadyForServerApproval: async function(paymentId){
+        try {
+          var resp = await fetch('/api/payments/approve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({paymentId}) });
+          var data = await resp.json();
+          if (data.error) { console.error('Batch approve failed:', data); resolve(); return; }
+        } catch(e){ console.error('Batch approve error:', e); resolve(); return; }
+      },
+      onReadyForServerCompletion: async function(paymentId, txid){
+        try {
+          var resp = await fetch('/api/payments/complete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({paymentId,txid}) });
+          var data = await resp.json();
+          if (data.error) { console.error('Batch complete failed:', data); resolve(); return; }
+        } catch(e){ console.error('Batch complete error:', e); resolve(); return; }
+        resolve();
+      },
+      onCancel: function(paymentId){ console.log('Batch cancelled:', paymentId); resolve(); },
+      onError: function(error){ console.error('Batch error:', error); resolve(); },
+    }).catch(function(err){ console.error('Batch createPayment error:', err); resolve(); });
+  });
+
+  pendingPayment = null;
+  // Process next payment with short delay to avoid rate limiting
+  setTimeout(function(){ processBatchPayments(payments, idx + 1); }, 500);
+}
+
+function parseBatchCsv(input){
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var lines = e.target.result.split(/\r?\n/);
+    var count = 0;
+    lines.forEach(function(line){
+      var cols = line.split(',');
+      var to = (cols[0]||'').trim();
+      var amt = parseFloat(cols[1]) || 0;
+      var memo = (cols[2]||'').trim();
+      if (to && amt > 0){
+        addBatchRow(to, amt, memo);
+        count++;
+      }
+    });
+    toast('CSV imported!', count + ' rows loaded');
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// Initialize with empty first row
+addBatchRow();
 
 // ═══════════════════════════════════════════════
 // MOBILE SIDEBAR
