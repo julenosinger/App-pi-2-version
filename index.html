@@ -15,9 +15,9 @@
      ══════════════════════════════════════════════════ -->
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script>
-  // SDK init — sandbox:true para Testnet/desenvolvimento
-  // Em produção Mainnet: remover sandbox ou setar false
-  Pi.init({ version: "2.0", sandbox: true });
+  // Pi SDK init — Pi.init() returns a Promise; must be awaited before Pi.authenticate()
+  // sandbox:true for Testnet; set to false for Mainnet production
+  window.__piInitPromise = Pi.init({ version: "2.0", sandbox: true });
 </script>
 
 <style>
@@ -536,10 +536,10 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
   <div class="ns">
     <div class="nl">Payments</div>
-    <div class="ni" onclick="nav('send',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span>Send Pi</span></div>
+    <div class="ni active" onclick="nav('send',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span>Send Pi</span></div>
     <div class="ni" onclick="nav('batch',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Batch Payments</span><span class="badge bgg">Pay</span></div>
     <div class="ni" onclick="nav('queue',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Payment Queue</span></div>
-    <div class="ni active" onclick="nav('links',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Payment Links</span></div>
+    <div class="ni" onclick="nav('links',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Payment Links</span></div>
     <div class="ni" onclick="nav('invoices',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Invoices</span></div>
     <div class="ni" onclick="nav('balance',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Balance</span><span class="badge bgp">Unified</span></div>
   </div>
@@ -571,8 +571,8 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 <main>
   <div class="topbar">
     <div class="phead">
-      <div class="picon" id="topIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-      <div class="ptitle"><h1 id="topTitle">Payment Links</h1><p id="topSub">Create shareable payment links for quick transfers</p></div>
+      <div class="picon" id="topIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+      <div class="ptitle"><h1 id="topTitle">Send Pi</h1><p id="topSub">Send Pi to any Pioneer via Pi SDK payment flow</p></div>
     </div>
     <div class="tright">
       <button class="pill-btn"><span class="sdot"></span>Sandbox (Testnet)</button>
@@ -584,7 +584,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
   </div>
 
   <!-- ════ PAYMENT LINKS ════ -->
-  <div class="page active" id="page-links">
+  <div class="page" id="page-links">
     <div class="scroll">
       <div class="frow">
         <div class="fcard"><div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>Create Link</h4><p>Get a payment link in seconds</p></div></div>
@@ -665,7 +665,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden}
   </div>
 
   <!-- ════ SEND PI ════ -->
-  <div class="page" id="page-send">
+  <div class="page active" id="page-send">
     <div class="scroll">
       <div class="two-col" style="align-items:start;grid-template-columns:1fr 240px">
         <div class="sgap">
@@ -1062,40 +1062,106 @@ function setAuthState(state, msg) {
 
 // ═══════════════════════════════════════════════
 // PI AUTHENTICATE
-// Scopes: ['username','payments'] conforme documentação
-// onIncompletePaymentFound: obrigatório — trata pagamentos incompletos
+// Pi.init() returns a Promise — must be awaited before Pi.authenticate()
+// Scope: ['username'] — returns uid, username, and accessToken
+// onIncompletePaymentFound: required callback for incomplete payments
 // ═══════════════════════════════════════════════
-function authenticatePi() {
+async function authenticatePi(silent) {
   const btn = document.getElementById('authBtn');
   btn.disabled = true;
   document.getElementById('authBtnText').textContent = 'Authenticating…';
-  setAuthState('warn','Requesting Pi authentication…');
+  if (!silent) setAuthState('warn','Initializing Pi SDK…');
 
-  const scopes = ['username', 'payments'];
+  try {
+    await window.__piInitPromise;
+    if (!silent) setAuthState('warn','Requesting Pi authentication…');
 
-  // Callback obrigatório para pagamentos incompletos
-  // (ex: usuário fechou o app no meio de um pagamento)
-  function onIncompletePaymentFound(payment) {
-    console.warn('[PioneerPIX] Incomplete payment found:', payment);
-    // Em produção: enviar ao servidor para cancelar ou completar
-    // POST /payments/{payment.identifier}/complete ou /cancel
-    toast('Incomplete payment detected', 'paymentId: ' + payment.identifier);
+    const scopes = ['username'];
+
+    function onIncompletePaymentFound(payment) {
+      console.warn('[PioneerPIX] Incomplete payment found:', payment);
+      toast('Incomplete payment detected', 'paymentId: ' + payment.identifier);
+    }
+
+    const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+
+    piAuth = auth;
+    piUser = {
+      uid:         auth.user.uid,
+      username:    auth.user.username,
+      accessToken: auth.accessToken,
+    };
+
+    // Validate the access token via backend (which calls GET https://api.minepi.com/v2/me)
+    await validateAccessToken(piUser.accessToken);
+    onAuthSuccess();
+  } catch (err) {
+    console.error('[PioneerPIX] Auth error:', err);
+    onAuthError(err, silent);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// VALIDATE ACCESS TOKEN WITH BACKEND
+// The backend MUST validate by calling:
+//   GET https://api.minepi.com/v2/me
+//   Authorization: Bearer <accessToken>
+// This confirms the token is valid and the user is who they claim to be.
+// No Pi Network API key is required for this endpoint.
+// ═══════════════════════════════════════════════
+async function validateAccessToken(accessToken) {
+  console.log('[PioneerPIX] Validating access token with backend…');
+
+  // In production, the backend validates the token server-side:
+  //
+  //   GET https://api.minepi.com/v2/me
+  //   Headers: { Authorization: "Bearer " + accessToken }
+  //
+  // Response (200 OK):
+  //   { uid: "...", username: "..." }
+  //
+  // On failure (401/403), the token is invalid and the session is rejected.
+
+  // For demo/sandbox: attempt a direct validation call
+  // (Note: in Pi Browser sandbox this may succeed; in standard browsers CORS will block it)
+  try {
+    const resp = await fetch('https://api.minepi.com/v2/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (resp.ok) {
+      const meData = await resp.json();
+      console.log('[PioneerPIX] Token validated via /v2/me:', meData);
+      // Cross-check: ensure the returned uid matches the auth result
+      if (meData.uid !== piUser.uid) {
+        console.warn('[PioneerPIX] UID mismatch — token may be forged');
+      }
+    } else {
+      console.warn('[PioneerPIX] /v2/me returned status', resp.status);
+      // In sandbox/development, continue anyway
+    }
+  } catch (e) {
+    // Expected in standard browsers due to CORS — backend validation would handle this
+    console.log('[PioneerPIX] /v2/me direct call blocked (expected if not in Pi Browser):', e.message);
+    // Continue — in production, your backend handles this server-side
   }
 
-  Pi.authenticate(scopes, onIncompletePaymentFound)
-    .then(function(auth) {
-      piAuth = auth;
-      piUser = {
-        uid:         auth.user.uid,
-        username:    auth.user.username,
-        accessToken: auth.accessToken,
-      };
-      onAuthSuccess();
-    })
-    .catch(function(err) {
-      console.error('[PioneerPIX] Auth error:', err);
-      onAuthError(err);
-    });
+  // In production, replace the above with:
+  //
+  //   const resp = await fetch('/api/auth/validate', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ accessToken }),
+  //   });
+  //   if (!resp.ok) throw new Error('Backend token validation failed');
+  //   const session = await resp.json();
+  //   // session now contains the established user session
+
+  return true;
 }
 
 function onAuthSuccess() {
@@ -1118,7 +1184,14 @@ function onAuthSuccess() {
   toast('Authenticated with Pi!', 'Welcome, @' + piUser.username);
 }
 
-function onAuthError(err) {
+function onAuthError(err, silent) {
+  if (silent) {
+    console.log('[PioneerPIX] Auth not available (silent mode):', err.message);
+    const btn = document.getElementById('authBtn');
+    btn.disabled = false;
+    document.getElementById('authBtnText').textContent = 'Authenticate with Pi';
+    return;
+  }
   const btn = document.getElementById('authBtn');
   btn.disabled = false;
   document.getElementById('authBtnText').textContent = 'Authenticate with Pi';
@@ -1188,49 +1261,62 @@ function runPaymentFlow() {
   stepActive('step2');
 
   const paymentCallbacks = {
-    // Fase 2 — Server Side Approval
-    onReadyForServerApproval: function(paymentId) {
-      console.log('[PioneerPIX] onReadyForServerApproval:', paymentId);
-      stepDone('step2');
-      stepActive('step3');
+      // Phase 2 — Server Side Approval (API key kept server-side)
+      onReadyForServerApproval: function(paymentId) {
+        console.log('[PioneerPIX] onReadyForServerApproval:', paymentId);
+        stepDone('step2');
+        stepActive('step3');
 
-      // Em produção: chamar seu backend que faz:
-      // POST https://api.minepi.com/v2/payments/{paymentId}/approve
-      // Authorization: Key <YOUR_API_KEY>
-      //
-      // Simulando aprovação para fins de demonstração:
-      console.log('[PioneerPIX] Simulating POST /v2/payments/' + paymentId + '/approve');
-      // fetch('/api/payments/approve', { method:'POST', body: JSON.stringify({paymentId}) })
-    },
+        fetch('/api/payments/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            console.log('[PioneerPIX] Approval response:', data);
+            if (data.error) console.error('[PioneerPIX] Approval error:', data);
+          })
+          .catch(err => console.error('[PioneerPIX] Approve fetch failed:', err));
+      },
 
-    // Fase 4 — Server Side Completion
-    onReadyForServerCompletion: function(paymentId, txid) {
-      console.log('[PioneerPIX] onReadyForServerCompletion:', paymentId, txid);
-      stepDone('step3');
-      stepActive('step4');
+      // Phase 4 — Server Side Completion (API key kept server-side)
+      onReadyForServerCompletion: function(paymentId, txid) {
+        console.log('[PioneerPIX] onReadyForServerCompletion:', paymentId, txid);
+        stepDone('step3');
+        stepActive('step4');
 
-      // Em produção: chamar seu backend que faz:
-      // POST https://api.minepi.com/v2/payments/{paymentId}/complete
-      // Authorization: Key <YOUR_API_KEY>
-      // Body: { txid }
-      //
-      console.log('[PioneerPIX] Simulating POST /v2/payments/' + paymentId + '/complete, txid=' + txid);
-
-      // Após confirmação do servidor:
-      stepDone('step4');
-      setTimeout(() => {
-        closeModal();
-        toast('Payment completed!', pendingPayment.amount.toFixed(3) + ' π sent — txid: ' + (txid||'pending'));
-        if(pendingPayment.ctx === 'links') {
-          // Adicionar link completado
-          const m = document.getElementById('lnkMemo').value || 'Payment';
-          const now = new Date();
-          links.unshift({id:Date.now(),amount:pendingPayment.amount.toFixed(2),memo:m,created:'Today, '+fmtTime(now),status:'active'});
-          renderLinks();
-        }
-        pendingPayment = null;
-      }, 800);
-    },
+        fetch('/api/payments/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId, txid }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            console.log('[PioneerPIX] Completion response:', data);
+            if (data.error) {
+              console.error('[PioneerPIX] Completion error:', data);
+              toast('Payment completion failed', data.error, true);
+              return;
+            }
+            stepDone('step4');
+            setTimeout(() => {
+              closeModal();
+              toast('Payment completed!', pendingPayment.amount.toFixed(3) + ' π sent — txid: ' + (txid||'pending'));
+              if(pendingPayment.ctx === 'links') {
+                const m = document.getElementById('lnkMemo').value || 'Payment';
+                const now = new Date();
+                links.unshift({id:Date.now(),amount:pendingPayment.amount.toFixed(2),memo:m,created:'Today, '+fmtTime(now),status:'active'});
+                renderLinks();
+              }
+              pendingPayment = null;
+            }, 800);
+          })
+          .catch(err => {
+            console.error('[PioneerPIX] Complete fetch failed:', err);
+            toast('Payment completion failed', err.message, true);
+          });
+      },
 
     onCancel: function(paymentId) {
       console.log('[PioneerPIX] Payment cancelled:', paymentId);
@@ -1542,9 +1628,21 @@ renderInvoices();
 updateInvStats();
 
 // ═══════════════════════════════════════════════
-// INIT
+// INIT — trigger Pi authentication automatically on app load
 // ═══════════════════════════════════════════════
 renderLinks();
+
+// Auto-authenticate when the page loads (Pi Browser / sandbox environment)
+(async function autoAuth() {
+  try {
+    // Wait for Pi SDK init to complete first
+    await window.__piInitPromise;
+    console.log('[PioneerPIX] Pi SDK initialized, attempting auto-authentication…');
+    await authenticatePi(true);
+  } catch (e) {
+    console.log('[PioneerPIX] Auto-auth did not complete (normal if not in Pi Browser):', e.message);
+  }
+})();
 </script>
 </body>
 </html>
